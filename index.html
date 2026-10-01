@@ -203,6 +203,15 @@ h2 small { font-size: 12.5px; font-weight: 600; color: var(--ink2); }
 .pill.off { background: var(--card); color: var(--ink2); border: 1px solid var(--line); }
 .bd-list { display: grid; gap: 8px; }
 
+/* ── 지금 보는 반의 교실 칠판 한 줄(번호·버전·최신 여부) ── */
+.bdstrip { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: calc(100% - 2 * max(16px, env(safe-area-inset-left))); margin: 0 max(16px, env(safe-area-inset-left)) 8px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 13px; text-align: left; line-height: 1.4; }
+.bdstrip b { font-weight: 900; font-size: 14px; }
+.bdstrip .sv { color: var(--ink2); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bdstrip .pill { margin-left: auto; }
+.bdstrip.bad { background: var(--yellow); border-color: transparent; color: var(--yellow-ink); } .bdstrip.bad .sv { color: var(--yellow-ink); }
+.bdstrip.ok { background: var(--green-soft); border-color: transparent; }
+.bdstrip.none { opacity: .85; }
+
 /* ── 설정 · 연결 ── */
 .stack { display: grid; gap: 14px; }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; }
@@ -258,6 +267,7 @@ ol.how b { color: var(--ink); }
     <button id="syncBtn" class="icon-btn" type="button" aria-label="새로 고침"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
   </header>
 
+  <button id="bdStrip" class="bdstrip" type="button" hidden aria-label="교실 칠판 상태 — 눌러서 자세히"></button>
   <button id="vBanner" class="vbanner" type="button" hidden></button>
 
   <main id="scroller">
@@ -401,7 +411,7 @@ ol.how b { color: var(--ink); }
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '1.1.1';
+  var APP_VERSION = '1.1.2';
   var LS = 'ytc1';
   var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
   var SIZES = [[1, '기본'], [2, '크게'], [3, '더 크게']];
@@ -460,6 +470,7 @@ ol.how b { color: var(--ink); }
     ui.tab = t; try { sessionStorage.setItem('ytc.tab', t); } catch (e) {}
     ['call', 'notice', 'set'].forEach(function (n) { $('v-' + n).hidden = n !== t; $('t-' + n).setAttribute('aria-selected', n === t ? 'true' : 'false'); });
     $('scroller').scrollTop = 0;
+    if (D) renderStrip();
     if (t === 'call') refreshRecent();
   }
 
@@ -803,13 +814,38 @@ ol.how b { color: var(--ink); }
       var conn = b.connected ? '' : (b.status === 'none' ? '' : ' · 지금은 꺼져 있음');
       return '<div class="bd-item' + (bad ? ' bad' : '') + '"><b>' + (b.cls === home ? '★ ' : '') + esc(clsLabel(b.cls)) + '</b>' + pill + '<span class="v" style="grid-column:1/-1">' + v + conn + '</span>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>';
     }).join('') || '<div class="empty">반 정보가 없어요</div>';
-    // 맨 위 알림 띠 — 어느 화면에 있든 보인다. 우리 반이 걸려 있으면 그 반을 먼저, 크게.
-    var bads = list.filter(boardIsBad), ban = $('vBanner');
+    renderStrip();
+  }
+  /* 맨 위 알림 띠 — 어느 화면에 있든 보인다. 우리 반이 걸려 있으면 그 반을 먼저, 크게. (위 «지금 보는 반» 한 줄에 이미 나온 반은 겹치지 않게 뺀다) */
+  function renderBanner() {
+    var B = D && D.boards, ban = $('vBanner'); if (!B) { ban.hidden = true; return; }
+    var home = S.home || homeOf(S.teacher), shown = stripCls();
+    var bads = (B.list || []).filter(boardIsBad).filter(function (b) { return b.cls !== shown; });
     if (!bads.length) { ban.hidden = true; return; }
     var mine = bads.filter(function (b) { return b.cls === home; })[0];
     ban.hidden = false;
     ban.innerHTML = '🔔 ' + (mine ? '<b>우리 반(' + esc(clsLabel(home)) + ') 칠판 업데이트가 필요해요</b>' : '업데이트가 필요한 교실 칠판 <b>' + bads.length + '곳</b>') +
       '<small>' + bads.map(function (b) { return esc(clsLabel(b.cls)); }).join(' · ') + ' · 눌러서 자세히 보기</small>';
+  }
+  /* 지금 보고 있는 반(호출은 고른 반 · 공지는 고른 대상 · 설정은 내 반)의 교실 칠판 한 줄 */
+  function stripCls() {
+    var home = S.home || homeOf(S.teacher) || ui.cls, c = '';
+    if (ui.tab === 'call') c = ui.cls;
+    else if (ui.tab === 'notice') c = ui.np === 'trans' ? T.scope : (ui.np === 'word' ? ui.wCls : (ui.nTargets.length === 1 ? ui.nTargets[0] : ''));
+    return (c && c !== '전체' && findClass(c)) ? c : home;
+  }
+  function renderStrip() {
+    var el = $('bdStrip'), B = D && D.boards, cls = D ? stripCls() : '';
+    renderBanner();
+    if (!B || !cls) { el.hidden = true; return; }
+    var b = (B.list || []).filter(function (x) { return x.cls === cls; })[0]; if (!b) { el.hidden = true; return; }
+    var L = B.latest || {}, v, pill, st = '';
+    if (b.status === 'ok') { v = boardKind(b.type) + ' v' + esc(b.name); pill = '<span class="pill ok">✅ 최신</span>'; st = 'ok'; }
+    else if (b.status === 'old') { v = boardKind(b.type) + ' v' + esc(b.name) + ' → 최신 v' + esc(b.type === 'web' ? (L.web || '') : (L.apkName || '')); pill = '<span class="pill warn">⚠️ 업데이트 필요</span>'; st = 'bad'; }
+    else if (b.status === 'unknown') { v = '버전을 알려 오지 않는 옛 앱'; pill = '<span class="pill warn">⚠️ 업데이트 필요</span>'; st = 'bad'; }
+    else { v = '아직 연결된 적 없어요'; pill = '<span class="pill off">연결 이력 없음</span>'; st = 'none'; }
+    el.className = 'bdstrip ' + st; el.hidden = false;
+    el.innerHTML = '🖥 <b>' + esc(clsLabel(cls)) + ' 칠판</b> <span class="sv">' + v + (b.status !== 'none' ? (b.connected ? ' · 켜져 있음' : ' · 꺼져 있음') : '') + '</span>' + pill;
   }
   async function refreshBoards() {
     if (!D) return;
@@ -894,6 +930,7 @@ ol.how b { color: var(--ink); }
     Array.prototype.forEach.call(document.querySelectorAll('#nSeg [data-np]'), function (b) { b.setAttribute('aria-selected', b.dataset.np === k ? 'true' : 'false'); });
     $('scroller').scrollTop = 0;
   }
+  document.addEventListener('click', function () { setTimeout(function () { if (D) renderStrip(); }, 0); });   // 반·대상·공지 갈래를 고를 때마다 «지금 보는 반 칠판» 한 줄을 맞춘다
   on('nSeg', 'click', function (e) { var b = e.target.closest('[data-np]'); if (b) setNp(b.dataset.np); });
   /* 전달사항 */
   on('tScopes', 'click', function (e) { var b = e.target.closest('[data-ts]'); if (!b) return; T.scope = b.dataset.ts; T.armed = null; renderTrans(); });
@@ -942,6 +979,7 @@ ol.how b { color: var(--ink); }
   on('tPost', 'click', function () { tSave(true); });
   on('tDiscard', 'click', tDiscard);
   /* 칠판 업데이트 알림 띠 → 설정의 칠판 목록으로 */
+  on('bdStrip', 'click', function () { setTab('set'); setTimeout(function () { $('bdCard').scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); });
   on('vBanner', 'click', function () { setTab('set'); setTimeout(function () { $('bdCard').scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); });
   setInterval(function () { if (!document.hidden && D) refreshBoards(); }, 60000);
 
