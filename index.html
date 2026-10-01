@@ -149,6 +149,60 @@ h2 small { font-size: 12.5px; font-weight: 600; color: var(--ink2); }
 .band.l2 span { font-size: 1.15em; } .band.l3 span { font-size: 1.3em; }
 .sizes { margin-top: 10px; }
 
+/* ── 공지 화면: 세 갈래(전달사항 · 긴급 공지 · 한 마디) ── */
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--card2); border-radius: 14px; margin: 0 auto 14px; max-width: 720px; }
+.seg button { min-height: 44px; border: 0; border-radius: 11px; background: none; font-weight: 800; font-size: 14.5px; color: var(--ink2); padding: 0 4px; }
+.seg button[aria-selected="true"] { background: var(--card); color: var(--ink); box-shadow: var(--shadow); }
+.np { max-width: 720px; margin: 0 auto; display: grid; gap: 14px; }
+.np .nt-grid { grid-template-columns: minmax(0, 1fr) !important; }
+.tstate { margin-top: 12px; border-radius: 12px; padding: 10px 12px; font-size: 13.5px; font-weight: 700; line-height: 1.45; background: var(--green-soft); color: var(--green); }
+.tstate.dirty { background: var(--yellow); color: var(--yellow-ink); }
+.tstate.draft { background: var(--blue-soft); color: var(--blue); }
+.tchipdot { font-size: 10px; color: var(--yellow-ink); background: var(--yellow); border-radius: 999px; padding: 0 6px; font-weight: 900; }
+.tadd .btn { width: 100%; min-height: 48px; font-size: 16px; }
+.titem { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 10px; }
+.thead { width: 100%; min-height: 56px; display: flex; align-items: center; gap: 10px; padding: 8px 14px; border: 0; background: none; text-align: left; }
+.thead .chev { font-size: 11px; color: var(--ink2); transition: transform .15s; }
+.titem.open .chev { transform: rotate(90deg); }
+.thead .rk { width: 26px; height: 26px; border-radius: 50%; background: var(--blue-soft); color: var(--blue); font-weight: 900; font-size: 13px; display: grid; place-items: center; flex: none; }
+.thead .tdate { font-size: 12.5px; font-weight: 800; color: var(--blue); flex: none; font-variant-numeric: tabular-nums; }
+.thead .tdate.always { color: var(--green); } .thead .tdate.past { color: var(--ink2); text-decoration: line-through; }
+.thead .ttitle { flex: 1; min-width: 0; font-weight: 800; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thead .ttitle.none { color: var(--ink2); font-weight: 600; }
+.thead .tflag { font-size: 11px; font-weight: 900; background: var(--yellow); color: var(--yellow-ink); border-radius: 999px; padding: 1px 8px; flex: none; }
+.tbody { padding: 4px 14px 16px; display: grid; gap: 8px; border-top: 1px solid var(--line); }
+.lbl { font-weight: 900; font-size: 13.5px; margin-top: 8px; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.lbl small { font-weight: 600; font-size: 12px; color: var(--ink2); }
+.emo { min-width: 46px; min-height: 46px; padding: 0 10px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); font-size: 20px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.emo.txt { font-size: 13px; font-weight: 800; padding: 0 14px; }
+.emo.lv { font-size: 15px; font-weight: 800; gap: 6px; }
+.emo:active { background: var(--blue-soft); }
+.daterow { display: flex; gap: 8px; }
+.daterow .field { flex: 1; min-width: 0; }
+.tfoot { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-top: 6px; }
+.tfoot .mv { display: flex; gap: 8px; }
+.tfoot .mv button { min-width: 46px; min-height: 46px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); font-weight: 800; }
+.tfoot .mv button:disabled { opacity: .35; }
+.tfoot .mv .del { color: var(--red); padding: 0 12px; }
+.tbar { position: sticky; bottom: 0; z-index: 3; margin: 0 -16px -20px; padding: 12px 16px 20px; background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -10px 24px -14px rgba(60,40,20,.35); display: grid; gap: 8px; }
+.tbar .rowbtns { margin-top: 0; } .tbar .stamp { margin: 0; text-align: center; }
+.memo-prev { background: var(--card2); border-radius: 12px; padding: 12px 14px; display: grid; gap: 10px; font-size: 15px; line-height: 1.6; }
+.memo-prev .pi b { display: block; font-weight: 900; }
+.memo-prev .pl { white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (min-width: 640px) { .tbar { margin: 0; border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); } }
+
+/* ── 버전 · 칠판 업데이트 알림 ── */
+.ver { font-size: 11px; font-weight: 800; color: var(--ink2); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; line-height: 18px; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.vbanner { display: block; width: calc(100% - 2 * max(16px, env(safe-area-inset-left))); margin: 0 max(16px, env(safe-area-inset-left)) 8px; text-align: left; border: 0; border-radius: 14px; background: var(--yellow); color: var(--yellow-ink); padding: 10px 14px; font-weight: 800; font-size: 14px; line-height: 1.4; }
+.vbanner small { display: block; font-weight: 600; font-size: 12.5px; margin-top: 2px; opacity: .9; }
+.bd-item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 11px 12px; border-radius: 14px; background: var(--card2); }
+.bd-item b { font-weight: 900; } .bd-item small { grid-column: 1 / -1; color: var(--ink2); font-size: 12.5px; line-height: 1.4; }
+.bd-item .v { font-size: 13px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.bd-item.bad { background: var(--yellow); } .bd-item.bad small, .bd-item.bad .v { color: var(--yellow-ink); }
+.pill.warn { background: var(--yellow-ink); color: var(--yellow); }
+.pill.off { background: var(--card); color: var(--ink2); border: 1px solid var(--line); }
+.bd-list { display: grid; gap: 8px; }
+
 /* ── 설정 · 연결 ── */
 .stack { display: grid; gap: 14px; }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; }
@@ -200,9 +254,11 @@ ol.how b { color: var(--ink); }
 <!-- ───────── 본 화면 ───────── -->
 <div id="main" hidden>
   <header class="top">
-    <div class="brand"><b id="boardTitle">전환기보드 담임</b><small><i class="dot" id="dot"></i><span id="who">연결 중…</span></small></div>
+    <div class="brand"><b id="boardTitle">전환기보드 담임</b><small><i class="dot" id="dot"></i><span id="who">연결 중…</span><span class="ver" id="appVer"></span></small></div>
     <button id="syncBtn" class="icon-btn" type="button" aria-label="새로 고침"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
   </header>
+
+  <button id="vBanner" class="vbanner" type="button" hidden></button>
 
   <main id="scroller">
     <div class="wrapw">
@@ -213,7 +269,7 @@ ol.how b { color: var(--ink); }
           <div class="pane-stu">
             <div class="chips scroll" id="clsChips" role="group" aria-label="반"></div>
             <div class="searchrow">
-              <input id="q" class="field" type="search" inputmode="search" enterkeyhint="search" placeholder="이름·번호로 찾기" autocomplete="off" aria-label="이름 또는 번호로 찾기">
+              <input id="q" class="field" type="search" inputmode="search" enterkeyhint="search" placeholder="이름·학번으로 찾기" autocomplete="off" aria-label="이름 또는 학번으로 찾기">
               <button id="selAll" class="btn ghost" type="button">전체 선택</button>
             </div>
             <div class="stu-grid" id="stuGrid"></div>
@@ -235,21 +291,55 @@ ol.how b { color: var(--ink); }
 
       <!-- 공지 -->
       <section id="v-notice" role="tabpanel" aria-labelledby="t-notice" hidden>
-        <div class="nt-grid">
-          <div class="card nt-target">
-            <h2>긴급 공지를 올릴 칠판 <small>여러 곳을 함께 골라도 돼요</small></h2>
-            <div class="chips" id="nTargets" role="group" aria-label="공지 대상"></div>
-          </div>
+        <div class="seg" id="nSeg" role="tablist" aria-label="공지 종류">
+          <button type="button" role="tab" data-np="trans" aria-selected="true">📋 전달사항</button>
+          <button type="button" role="tab" data-np="urgent" aria-selected="false">📢 긴급 공지</button>
+          <button type="button" role="tab" data-np="word" aria-selected="false">💬 한 마디</button>
+        </div>
+
+        <!-- 전달사항 — 칠판 「학급 메모」 칸. 번호(1️⃣…) 제목 + 줄 앞 기호(✅ ☑️ ✔️)로 단계를 나누고 ▲▼로 순위를 정한다 -->
+        <div class="np" id="np-trans">
           <div class="card">
-            <h2>📢 긴급 공지 <small>칠판 맨 위 노란 띠</small></h2>
-            <div class="live" id="nLive"></div>
-            <textarea id="nText" class="field" rows="4" maxlength="200" placeholder="예: 5교시 체육 → 체육관에서 합니다"></textarea>
-            <div class="count" id="nCount">0 / 200자</div>
-            <div class="chips sizes" id="nSizes" role="radiogroup" aria-label="글자 크기"></div>
-            <div class="band" id="nBand" hidden><b>📢 긴급 공지</b><span id="nBandTx"></span></div>
-            <div class="rowbtns"><button id="nPost" class="btn primary" type="button">올리기</button><button id="nClear" class="btn ghost" type="button">내리기</button></div>
-            <div class="stamp" id="nStamp" role="status"></div>
+            <h2>📋 전달사항 <small>칠판 「학급 메모」 칸</small></h2>
+            <div class="chips" id="tScopes" role="group" aria-label="전달사항 대상"></div>
+            <div class="tstate" id="tState" role="status"></div>
+            <p class="hint" id="tWhere"></p>
           </div>
+          <div class="tadd"><button id="tAdd" class="btn ghost" type="button">＋ 새 전달사항</button></div>
+          <div id="tList"></div>
+          <div class="card">
+            <h2>👁 칠판 메모는 이렇게 보여요 <small id="tPrevHint"></small></h2>
+            <div class="memo-prev" id="tPreview"></div>
+          </div>
+          <div class="tbar" id="tBar">
+            <div class="rowbtns"><button id="tDraft" class="btn ghost" type="button">초안 저장</button><button id="tPost" class="btn primary" type="button">✅ 칠판에 올리기</button></div>
+            <div class="stamp" id="tStamp" role="status"></div>
+            <button id="tDiscard" class="btn ghost" type="button" hidden style="min-height:40px;font-size:13.5px;font-weight:800">초안 버리고 칠판 내용으로</button>
+          </div>
+        </div>
+
+        <!-- 긴급 공지 -->
+        <div class="np" id="np-urgent" hidden>
+          <div class="nt-grid">
+            <div class="card nt-target">
+              <h2>긴급 공지를 올릴 칠판 <small>여러 곳을 함께 골라도 돼요</small></h2>
+              <div class="chips" id="nTargets" role="group" aria-label="공지 대상"></div>
+            </div>
+            <div class="card">
+              <h2>📢 긴급 공지 <small>칠판 맨 위 노란 띠</small></h2>
+              <div class="live" id="nLive"></div>
+              <textarea id="nText" class="field" rows="4" maxlength="200" placeholder="예: 5교시 체육 → 체육관에서 합니다"></textarea>
+              <div class="count" id="nCount">0 / 200자</div>
+              <div class="chips sizes" id="nSizes" role="radiogroup" aria-label="글자 크기"></div>
+              <div class="band" id="nBand" hidden><b>📢 긴급 공지</b><span id="nBandTx"></span></div>
+              <div class="rowbtns"><button id="nPost" class="btn primary" type="button">올리기</button><button id="nClear" class="btn ghost" type="button">내리기</button></div>
+              <div class="stamp" id="nStamp" role="status"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 담임 한 마디 -->
+        <div class="np" id="np-word" hidden>
           <div class="card">
             <h2>💬 담임 한 마디 <small>우리 반 칠판에만</small></h2>
             <div class="chips" id="wTargets" role="radiogroup" aria-label="한 마디를 올릴 반"></div>
@@ -259,8 +349,9 @@ ol.how b { color: var(--ink); }
             <div class="rowbtns"><button id="wPost" class="btn primary" type="button">올리기</button><button id="wClear" class="btn ghost" type="button">내리기</button></div>
             <div class="stamp" id="wStamp" role="status"></div>
           </div>
-          <p class="hint nt-target">칠판은 교실의 누구나 볼 수 있어요 — <b>학생 이름·상담 내용은 적지 마세요.</b> 올리면 칠판에 몇 초~3분 안에 바뀝니다.</p>
         </div>
+
+        <p class="hint" style="max-width:720px;margin:14px auto 0">칠판은 교실의 누구나 볼 수 있어요 — <b>학생 이름·상담 내용은 적지 마세요.</b> 올리면 칠판에 몇 초~3분 안에 바뀝니다.</p>
       </section>
 
       <!-- 설정 -->
@@ -274,6 +365,11 @@ ol.how b { color: var(--ink); }
           <div class="card">
             <h2>🏫 우리 반 <small>처음 열 때 이 반이 선택돼요</small></h2>
             <div class="chips" id="homeChips" role="radiogroup" aria-label="우리 반"></div>
+          </div>
+          <div class="card" id="bdCard">
+            <h2>🖥 교실 칠판 <small id="bdLatest"></small></h2>
+            <div class="bd-list" id="bdList"></div>
+            <p class="hint">칠판이 켜져 있을 때 스스로 알려 오는 버전이에요. <b>업데이트가 필요하면</b> 이 화면 맨 위와 관리자 화면에 알림이 떠요.</p>
           </div>
           <div class="card">
             <h2>🔗 연결</h2>
@@ -305,7 +401,7 @@ ol.how b { color: var(--ink); }
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '1.0.0';
+  var APP_VERSION = '1.1.0';
   var LS = 'ytc1';
   var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
   var SIZES = [[1, '기본'], [2, '크게'], [3, '더 크게']];
@@ -315,7 +411,8 @@ ol.how b { color: var(--ink); }
   /* ── 저장 · 상태 ── */
   var S = loadS();            // {u, k, teacher, home}
   var D = null;               // 서버가 준 반·학생·선생님·공지
-  var ui = { tab: 'call', cls: '', sel: {}, q: '', nTargets: [], nStep: 1, nDirty: false, wCls: '', wDirty: false, sending: false };
+  var T = { scope: '', rows: {}, saved: {}, pending: {}, dirty: {}, stamps: {}, busy: false, armed: null };   // 전달사항(번호·기호 단계)
+  var ui = { np: 'trans', tab: 'call', cls: '', sel: {}, q: '', nTargets: [], nStep: 1, nDirty: false, wCls: '', wDirty: false, sending: false };
   function loadS() { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { return null; } }
   function saveS() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
 
@@ -385,14 +482,18 @@ ol.how b { color: var(--ink); }
     renderAll();
     return true;
   }
-  function clsLabel(c) { var one = D && D.classes.every(function (x) { return x.grade === D.classes[0].grade; }); return one ? c.split('-')[1] + '반' : c.replace('-', '학년 ') + '반'; }
+  function clsLabel(c) { return String(c); }   // 반은 «3-2» 모양으로 쓴다
+  function pad2(v) { v = String(v); return v.length < 2 ? '0' + v : v; }
+  function sid(g, c, n) { return String(g) + String(Number(c)) + pad2(n); }   // 학번 — 3201 = 3학년 2반 01번
   function findClass(c) { return D && D.classes.filter(function (x) { return x.cls === c; })[0]; }
   function homeOf(name) { var t = D && D.teachers.filter(function (x) { return x.name === name; })[0]; return t ? t.homeroom : ''; }
 
   function renderAll() {
     $('boardTitle').textContent = D.boardTitle || '전환기보드 담임';
     $('who').textContent = S.teacher ? S.teacher + ' 선생님' : '선생님을 골라 주세요';
+    $('appVer').textContent = 'v' + APP_VERSION;
     renderCls(); renderStudents(); renderCompose(); renderRecent();
+    loadTrans(); renderTrans(); renderBoards();
     if (!ui.nDirty) loadNoticeFields();
     if (!ui.wDirty) loadWordField();
     renderNotice(); renderSettings();
@@ -408,13 +509,13 @@ ol.how b { color: var(--ink); }
   function visibleStudents() {
     var c = findClass(ui.cls); if (!c) return [];
     var q = ui.q.trim();
-    return c.students.filter(function (s) { return !q || String(s[1]).indexOf(q) >= 0 || String(s[0]) === q.replace(/번$/, ''); });
+    return c.students.filter(function (s) { return !q || String(s[1]).indexOf(q) >= 0 || sid(c.grade, c.classNum, s[0]).indexOf(q) >= 0 || String(s[0]) === q.replace(/번$/, ''); });
   }
   function renderStudents() {
-    var list = visibleStudents();
-    if (!findClass(ui.cls)) { $('stuGrid').innerHTML = '<div class="skel"></div>'; return; }
+    var list = visibleStudents(), cc = findClass(ui.cls);
+    if (!cc) { $('stuGrid').innerHTML = '<div class="skel"></div>'; return; }
     $('stuGrid').innerHTML = list.length ? list.map(function (s) {
-      return '<button type="button" class="stu" data-num="' + s[0] + '" aria-pressed="' + !!ui.sel[s[0]] + '"><i>' + s[0] + '번</i><b>' + esc(s[1]) + '</b></button>';
+      return '<button type="button" class="stu" data-num="' + s[0] + '" aria-pressed="' + !!ui.sel[s[0]] + '"><i>' + sid(cc.grade, cc.classNum, s[0]) + '</i><b>' + esc(s[1]) + '</b></button>';
     }).join('') : '<div class="empty" style="grid-column:1/-1">찾는 학생이 없어요</div>';
     var allOn = list.length && list.every(function (s) { return ui.sel[s[0]]; });
     $('selAll').textContent = allOn ? '선택 해제' : '전체 선택';
@@ -461,7 +562,7 @@ ol.how b { color: var(--ink); }
     var list = (D.recent || []).filter(function (x) { return (x.grade + '-' + x.classNum) === ui.cls; });
     $('rcHint').textContent = ui.cls ? ui.cls + ' · 칠판이 확인하면 「확인됨」' : '';
     $('recent').innerHTML = list.length ? list.map(function (x) {
-      return '<div class="rc-item"><time>' + esc(x.time) + '</time><b>' + esc(x.num) + '번 ' + esc(x.name) + '</b><span class="pill ' + (x.done ? 'ok' : 'wait') + '">' + (x.done ? '확인됨' : '대기') + '</span>' +
+      return '<div class="rc-item"><time>' + esc(x.time) + '</time><b>' + esc(sid(x.grade, x.classNum, x.num)) + ' ' + esc(x.name) + '</b><span class="pill ' + (x.done ? 'ok' : 'wait') + '">' + (x.done ? '확인됨' : '대기') + '</span>' +
         (x.message ? '<small>' + esc(x.message) + ' · ' + esc(x.teacher) + '</small>' : '<small>' + esc(x.teacher) + '</small>') + '</div>';
     }).join('') : '<div class="empty">오늘 이 반에 한 호출이 없어요</div>';
   }
@@ -523,6 +624,194 @@ ol.how b { color: var(--ink); }
     } else toast((r && r.msg) || '저장하지 못했어요', true);
   }
 
+  /* ── 전달사항: 번호(1️⃣…)·줄 앞 기호(✅ ☑️ ✔️)·순위·날짜 — 교사 화면 「전달사항」과 같은 규칙 ── */
+  var NUMS = ['1\uFE0F\u20E3', '2\uFE0F\u20E3', '3\uFE0F\u20E3', '4\uFE0F\u20E3', '5\uFE0F\u20E3', '6\uFE0F\u20E3', '7\uFE0F\u20E3', '8\uFE0F\u20E3', '9\uFE0F\u20E3', '\uD83D\uDD1F'];
+  var NUM_RE = /^(?:[0-9]\uFE0F?\u20E3|\uD83D\uDD1F)\s*/;
+  var LEVEL_RE = /^\s*(\u2705|\u2611\uFE0F?|\u2714\uFE0F?)\s*/;
+  var LEVELS = [['\u2705', '1단계'], ['\u2611\uFE0F', '2단계'], ['\u2714\uFE0F', '3단계']];
+  function todayDash() { var d = new Date(), p = function (x) { return (x < 10 ? '0' : '') + x; }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  function dateLabel(ymd) {
+    if (!ymd) return '상시';
+    var m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})$/); if (!m) return ymd;
+    return (+m[2]) + '/' + (+m[3]) + '(' + '일월화수목금토'.charAt(new Date(+m[1], +m[2] - 1, +m[3]).getDay()) + ')';
+  }
+  function headTitle(r) { var t = (r.title || '').trim(); if (t) return { text: t, none: false }; var f = String(r.text || '').split('\n')[0].trim(); return f ? { text: f, none: true } : { text: '(제목 없음)', none: true }; }
+  function copyRows(rows) { return (rows || []).map(function (r) { return { date: r.date || '', title: r.title || '', text: r.text || '', step: r.step || 1, _open: false }; }); }
+  function scopeLabel(k) { return k === '전체' ? '학년 전체' : clsLabel(k); }
+  function loadTrans() {
+    var tr = D.trans || {};
+    Object.keys(tr).forEach(function (k) {
+      T.saved[k] = copyRows(tr[k].rows); T.pending[k] = !!tr[k].pending;
+      if (!T.dirty[k]) { T.rows[k] = copyRows(tr[k].rows); T.stamps[k] = tr[k].savedAt || ''; }
+    });
+    if (!T.scope || (T.scope !== '전체' && !findClass(T.scope))) T.scope = ui.cls || '전체';
+  }
+  function renderTrans() {
+    var sc = T.scope, isAll = sc === '전체';
+    $('tScopes').innerHTML = ['전체'].concat(D.classes.map(function (c) { return c.cls; })).map(function (k) {
+      return '<button type="button" class="chip" data-ts="' + esc(k) + '" aria-pressed="' + (k === sc) + '">' + esc(scopeLabel(k)) + (T.dirty[k] ? ' <span class="tchipdot">●</span>' : (T.pending[k] ? ' <span class="tchipdot">초안</span>' : '')) + '</button>';
+    }).join('');
+    $('tWhere').innerHTML = isAll
+      ? '여기 올린 전달사항은 <b>3학년 모든 반 칠판의 「학급 메모」</b>에 위에서부터 1️⃣ 2️⃣ 3️⃣ 순서로 떠요. ▲▼로 순위를 바꾸고, 날짜를 넣으면 그날만, 비우면 계속 떠요.'
+      : '여기 올린 전달사항은 <b>' + esc(clsLabel(sc)) + ' 칠판의 「학급 메모」</b>에만 떠요(전체 탭의 것이 먼저, 그다음 이 반 것). ▲▼로 순위를 바꾸고, 날짜를 넣으면 그날만, 비우면 계속 떠요.';
+    renderTList(); renderTState(); renderTPreview();
+  }
+  function renderTState() {
+    var sc = T.scope, box = $('tState'), st = 'live', msg;
+    if (T.dirty[sc]) { st = 'dirty'; msg = '✏️ 저장하지 않은 변경이 있어요 — 칠판에는 아직 아무것도 올라가지 않았어요.'; }
+    else if (T.pending[sc]) { st = 'draft'; msg = '📝 초안 상태 — 칠판에는 아직 안 나와요. 「칠판에 올리기」를 눌러야 올라갑니다.'; }
+    else msg = '✅ 칠판에 반영된 내용이에요.';
+    box.className = 'tstate ' + st; box.textContent = msg;
+    $('tDraft').disabled = T.busy || !T.dirty[sc];
+    $('tPost').disabled = T.busy || !(T.dirty[sc] || T.pending[sc]);
+    $('tDiscard').hidden = !T.pending[sc] && !T.dirty[sc];
+    $('tPost').textContent = '✅ ' + (sc === '전체' ? '모든 반 칠판에 올리기' : '칠판에 올리기');
+    $('tStamp').textContent = T.stamps[sc] ? ((T.dirty[sc] ? '마지막 저장 · ' : '마지막 저장 · ') + T.stamps[sc]) : '';
+  }
+  function tItemHtml(r, i, total) {
+    var today = todayDash(), ht = headTitle(r);
+    var nums = NUMS.map(function (e, k) { return '<button type="button" class="emo" data-act="num" data-e="' + e + '" aria-label="' + (k + 1) + '번">' + e + '</button>'; }).join('') + '<button type="button" class="emo txt" data-act="num" data-e="">번호 빼기</button>';
+    var lvls = LEVELS.map(function (l) { return '<button type="button" class="emo lv" data-act="lvl" data-e="' + l[0] + '" aria-label="' + l[1] + '">' + l[0] + ' ' + l[1] + '</button>'; }).join('') + '<button type="button" class="emo txt" data-act="lvl" data-e="">기호 빼기</button>';
+    var sizes = [[1, '기본'], [2, '크게'], [3, '더 크게']].map(function (z) { return '<button type="button" class="chip soft" role="radio" data-act="size" data-s="' + z[0] + '" aria-checked="' + (Math.min(r.step || 1, 3) === z[0]) + '">' + z[1] + '</button>'; }).join('');
+    return '<div class="titem' + (r._open ? ' open' : '') + '" data-i="' + i + '">' +
+      '<button type="button" class="thead" data-act="toggle" aria-expanded="' + !!r._open + '"><span class="chev">▶</span><span class="rk">' + (i + 1) + '</span>' +
+      '<span class="tdate' + (!r.date ? ' always' : (r.date < today ? ' past' : '')) + '">' + esc(dateLabel(r.date)) + '</span>' +
+      '<span class="ttitle' + (ht.none ? ' none' : '') + '">' + esc(ht.text) + '</span><span class="tflag"' + (r.date === today ? '' : ' hidden') + '>오늘</span></button>' +
+      '<div class="tbody"' + (r._open ? '' : ' hidden') + '>' +
+        '<div class="lbl">제목 <small>칠판에 굵은 제목으로 떠요</small></div>' +
+        '<div class="chips scroll">' + nums + '</div>' +
+        '<input class="field" data-f="title" maxlength="' + ((D.limits && D.limits.transTitle) || 40) + '" value="' + esc(r.title) + '" placeholder="예: 진로체험" aria-label="제목">' +
+        '<div class="lbl">날짜 <small>비우면 지울 때까지 계속 떠요</small></div>' +
+        '<div class="daterow"><input class="field" type="date" data-f="date" value="' + esc(r.date) + '" aria-label="날짜"><button type="button" class="chip soft" data-act="always">상시로</button></div>' +
+        '<div class="lbl">내용 <small>제목 아래 들여쓴 줄로 떠요 · 줄 앞 기호가 단계예요</small></div>' +
+        '<div class="chips scroll">' + lvls + '</div>' +
+        '<textarea class="field" data-f="text" rows="5" maxlength="' + ((D.limits && D.limits.transText) || 300) + '" placeholder="내용 (줄바꿈이 칠판에 그대로 보여요)" aria-label="내용">' + esc(r.text) + '</textarea>' +
+        '<div class="tfoot"><div class="chips" role="radiogroup" aria-label="글자 크기"><span style="align-self:center;font-size:13px;color:var(--ink2);font-weight:700">글자</span>' + sizes + '</div>' +
+        '<div class="mv"><button type="button" data-act="up" aria-label="순위 올리기"' + (i <= 0 ? ' disabled' : '') + '>▲</button><button type="button" data-act="down" aria-label="순위 내리기"' + (i >= total - 1 ? ' disabled' : '') + '>▼</button><button type="button" class="del" data-act="del">🗑 삭제</button></div></div>' +
+      '</div></div>';
+  }
+  function renderTList() {
+    var rows = T.rows[T.scope] || [];
+    $('tList').innerHTML = rows.length ? rows.map(function (r, i) { return tItemHtml(r, i, rows.length); }).join('') : '<div class="empty">등록된 전달사항이 없어요.<br>위의 「＋ 새 전달사항」으로 넣어 보세요.</div>';
+  }
+  function renderTPreview() {
+    var sc = T.scope, isAll = sc === '전체', today = todayDash();
+    var pool = isAll ? (T.rows['전체'] || []) : (T.saved['전체'] || []).concat(T.rows[sc] || []);
+    var html = '', no = 0;
+    pool.forEach(function (r) {
+      if (!(r.date === '' || r.date === today)) return;
+      var title = (r.title || '').trim(), text = (r.text || '').trim();
+      if (!title && !text) return;
+      no++;
+      html += '<div class="pi">' + (title ? '<b>' + esc(NUM_RE.test(title) ? title : ((NUMS[no - 1] || '▪') + ' ' + title)) + '</b>' : '');
+      text.split('\n').forEach(function (l) {
+        l = l.trim(); if (!l) return;
+        var lv = /^\u2611/.test(l) ? 2 : (/^\u2714/.test(l) ? 3 : 1);
+        html += '<div class="pl" style="padding-left:' + (lv * 1.2) + 'em">' + esc(l) + '</div>';
+      });
+      html += '</div>';
+    });
+    $('tPreview').innerHTML = html || '<div class="empty" style="padding:6px">오늘 뜨는 전달사항이 없어요 (날짜를 넣은 것은 그날만 보여요)</div>';
+    $('tPrevHint').textContent = (isAll ? '모든 반' : clsLabel(sc)) + ' · 오늘(' + dateLabel(today) + ') 기준';
+  }
+  function tDirty() { T.dirty[T.scope] = true; T.armed = null; var sc = $('tScopes'); renderTrans_light(); }
+  function renderTrans_light() {   // 입력 중에는 목록을 다시 그리지 않는다(커서가 튀지 않게) — 상태·미리보기·대상 칩만 갱신
+    $('tScopes').innerHTML = ['전체'].concat(D.classes.map(function (c) { return c.cls; })).map(function (k) {
+      return '<button type="button" class="chip" data-ts="' + esc(k) + '" aria-pressed="' + (k === T.scope) + '">' + esc(scopeLabel(k)) + (T.dirty[k] ? ' <span class="tchipdot">●</span>' : (T.pending[k] ? ' <span class="tchipdot">초안</span>' : '')) + '</button>';
+    }).join('');
+    renderTState(); renderTPreview();
+  }
+  function cleanRows(sc) { return (T.rows[sc] || []).filter(function (r) { return (r.title || '').trim() || (r.text || '').trim(); }).map(function (r) { return { date: r.date || '', title: (r.title || '').trim(), text: r.text || '', step: r.step || 1 }; }); }
+  function disarm() { T.armed = null; $('tPost').textContent = '✅ ' + (T.scope === '전체' ? '모든 반 칠판에 올리기' : '칠판에 올리기'); }
+  async function tSave(post) {
+    if (T.busy) return;
+    var sc = T.scope;
+    if (post && !T.dirty[sc] && !T.pending[sc]) { toast('올릴 내용이 없어요'); return; }
+    if (post && sc === '전체' && T.armed !== sc) {   // 학년 전체는 실수로 누르면 모든 반 칠판이 바뀐다 — 한 번 더 눌러야 올라간다
+      T.armed = sc; $('tPost').textContent = '정말 모든 반에 올릴까요? 한 번 더'; setTimeout(function () { if (T.armed === sc) { T.armed = null; if (T.scope === sc) disarm(); } }, 4000); return;
+    }
+    T.armed = null;
+    var clean = cleanRows(sc), r;
+    T.busy = true; renderTState(); if (post) $('tPost').textContent = '올리는 중…';
+    if (post) r = T.dirty[sc] ? await api('transPost', { cls: sc, rows: clean }, 2) : await api('transPublish', { cls: sc }, 2);
+    else r = await api('transSave', { cls: sc, rows: clean }, 2);
+    T.busy = false;
+    if (r && r.ok) {
+      if (!post || T.dirty[sc]) T.rows[sc] = copyRows(clean);
+      T.saved[sc] = copyRows(T.rows[sc]); T.dirty[sc] = false;
+      T.pending[sc] = !post; T.stamps[sc] = (post ? r.publishedAt : r.savedAt) || now();
+      toast(post ? '✅ ' + scopeLabel(sc) + ' 칠판에 올렸어요 — 곧 바뀌어요' : '📝 초안으로 저장했어요 (칠판에는 아직 안 나와요)');
+      renderTrans();
+    } else {
+      if (r && r.draftSaved) { T.dirty[sc] = false; T.pending[sc] = true; T.saved[sc] = copyRows(T.rows[sc]); T.stamps[sc] = r.savedAt || T.stamps[sc]; }
+      toast((r && r.msg) || '저장하지 못했어요', true); renderTrans();
+    }
+  }
+  async function tDiscard() {
+    if (T.busy) return; var sc = T.scope;
+    if (T.armed !== 'd' + sc) { T.armed = 'd' + sc; $('tDiscard').textContent = '정말 버릴까요? 한 번 더'; setTimeout(function () { if (T.armed === 'd' + sc) { T.armed = null; $('tDiscard').textContent = '초안 버리고 칠판 내용으로'; } }, 4000); return; }
+    T.armed = null; $('tDiscard').textContent = '초안 버리고 칠판 내용으로';
+    T.busy = true; var r = await api('transDiscard', { cls: sc }, 2); T.busy = false;
+    if (r && r.ok) { T.rows[sc] = copyRows(r.rows); T.saved[sc] = copyRows(r.rows); T.dirty[sc] = false; T.pending[sc] = false; T.stamps[sc] = r.savedAt || ''; toast('초안을 버렸어요'); renderTrans(); }
+    else { toast((r && r.msg) || '버리지 못했어요', true); renderTrans(); }
+  }
+  /* 고른 줄(여러 줄이면 전부) 앞에 단계 기호를 붙인다. 이미 그 기호면 뗀다. emoji 가 ''이면 기호만 뗀다. 선택 위치는 버튼을 눌러 포커스를 잃어도 기억해 둔다. */
+  function applyLevel(ta, emoji) {
+    var v = ta.value, a = ta._s != null ? ta._s : ta.selectionStart, b = ta._e != null ? ta._e : ta.selectionEnd;
+    a = Math.min(a, v.length); b = Math.min(b, v.length);
+    var ls = v.lastIndexOf('\n', a - 1) + 1, le = v.indexOf('\n', b); if (le < 0) le = v.length;
+    var lines = v.slice(ls, le).split('\n');
+    var allHave = emoji && lines.every(function (l) { var m = LEVEL_RE.exec(l); return m && m[1].charAt(0) === emoji.charAt(0); });
+    var joined = lines.map(function (l) { var body = l.replace(LEVEL_RE, ''); return (emoji && !allHave) ? (emoji + ' ' + body) : body; }).join('\n');
+    ta.value = v.slice(0, ls) + joined + v.slice(le);
+    ta._s = ls; ta._e = ls + joined.length;
+    try { ta.setSelectionRange(ta._s, ta._e); } catch (e) {}
+  }
+  function applyNumber(title, emoji) {
+    var m = NUM_RE.exec(title), cur = m ? m[0].trim() : '', rest = title.replace(NUM_RE, '');
+    if (!emoji || cur === emoji) return rest;
+    return emoji + ' ' + rest;
+  }
+  function tRow(el) { var it = el.closest('.titem'); return it ? { it: it, row: (T.rows[T.scope] || [])[Number(it.dataset.i)] } : null; }
+  function tUpdateHead(it, r) {
+    var ht = headTitle(r), today = todayDash();
+    it.querySelector('.ttitle').textContent = ht.text; it.querySelector('.ttitle').className = 'ttitle' + (ht.none ? ' none' : '');
+    var d = it.querySelector('.tdate'); d.textContent = dateLabel(r.date); d.className = 'tdate' + (!r.date ? ' always' : (r.date < today ? ' past' : ''));
+    it.querySelector('.tflag').hidden = r.date !== today;
+  }
+
+  /* ── 교실 칠판 버전 · 업데이트 알림 ── */
+  function boardKind(t) { return t === 'apk' ? '앱' : (t === 'web' ? '웹 칠판' : '칠판'); }
+  function boardIsBad(b) { return b.status === 'old' || b.status === 'unknown'; }
+  function renderBoards() {
+    var B = D && D.boards; if (!B) { $('bdList').innerHTML = '<div class="empty">불러오는 중…</div>'; $('vBanner').hidden = true; return; }
+    var L = B.latest || {};
+    $('bdLatest').textContent = '최신 앱 v' + (L.apkName || '?') + ' · 서버 v' + (L.web || '?');
+    var home = S.home || homeOf(S.teacher);
+    var list = (B.list || []).slice().sort(function (a, b) { return (b.cls === home) - (a.cls === home) || a.cls.localeCompare(b.cls); });
+    $('bdList').innerHTML = list.map(function (b) {
+      var bad = boardIsBad(b), pill, v, sub = '';
+      if (b.status === 'ok') { pill = '<span class="pill ok">최신</span>'; v = boardKind(b.type) + ' v' + esc(b.name); }
+      else if (b.status === 'old') { pill = '<span class="pill warn">업데이트 필요</span>'; v = boardKind(b.type) + ' v' + esc(b.name); sub = b.type === 'web' ? '열어 둔 웹 칠판이 옛 판이에요 — 칠판 화면에서 새로고침(F5)' : '칠판 앱 위 「새 버전」 띠의 「지금 설치」 → 「업데이트」 (최신 v' + esc(L.apkName || '') + ')'; }
+      else if (b.status === 'unknown') { pill = '<span class="pill warn">확인 안 됨</span>'; v = '버전을 알려 오지 않는 옛 앱'; sub = '업데이트가 필요해요 — 칠판 앱 위 「새 버전」 띠의 「지금 설치」 (최신 v' + esc(L.apkName || '') + ')'; }
+      else { pill = '<span class="pill off">연결 이력 없음</span>'; v = '아직 연결된 적 없어요'; }
+      var conn = b.connected ? '' : (b.status === 'none' ? '' : ' · 지금은 꺼져 있음');
+      return '<div class="bd-item' + (bad ? ' bad' : '') + '"><b>' + (b.cls === home ? '★ ' : '') + esc(clsLabel(b.cls)) + '</b>' + pill + '<span class="v" style="grid-column:1/-1">' + v + conn + '</span>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>';
+    }).join('') || '<div class="empty">반 정보가 없어요</div>';
+    // 맨 위 알림 띠 — 어느 화면에 있든 보인다. 우리 반이 걸려 있으면 그 반을 먼저, 크게.
+    var bads = list.filter(boardIsBad), ban = $('vBanner');
+    if (!bads.length) { ban.hidden = true; return; }
+    var mine = bads.filter(function (b) { return b.cls === home; })[0];
+    ban.hidden = false;
+    ban.innerHTML = '🔔 ' + (mine ? '<b>우리 반(' + esc(clsLabel(home)) + ') 칠판 업데이트가 필요해요</b>' : '업데이트가 필요한 교실 칠판 <b>' + bads.length + '곳</b>') +
+      '<small>' + bads.map(function (b) { return esc(clsLabel(b.cls)); }).join(' · ') + ' · 눌러서 자세히 보기</small>';
+  }
+  async function refreshBoards() {
+    if (!D) return;
+    var r = await api('boards', {}, 1);
+    if (r && r.ok && r.boards) { D.boards = r.boards; renderBoards(); }
+  }
+
   /* ── 설정 ── */
   function renderSettings() {
     $('teacherChips').innerHTML = D.teachers.length ? D.teachers.map(function (t) {
@@ -559,8 +848,8 @@ ol.how b { color: var(--ink); }
     if (b.dataset.nt !== undefined) { var i = ui.nTargets.indexOf(b.dataset.nt); if (i >= 0) ui.nTargets.splice(i, 1); else ui.nTargets.push(b.dataset.nt); ui.nDirty = false; loadNoticeFields(); renderNotice(); return; }
     if (b.dataset.step !== undefined) { ui.nStep = Number(b.dataset.step); renderNotice(); return; }
     if (b.dataset.wt !== undefined) { ui.wCls = b.dataset.wt; ui.wDirty = false; loadWordField(); renderNotice(); return; }
-    if (b.dataset.teacher !== undefined) { S.teacher = b.dataset.teacher; var hm = homeOf(S.teacher); if (hm && !S.home) { ui.cls = hm; ui.nTargets = [hm]; ui.wCls = hm; ui.nDirty = ui.wDirty = false; } saveS(); renderAll(); toast(S.teacher + ' 선생님으로 저장했어요'); return; }
-    if (b.dataset.home !== undefined) { S.home = b.dataset.home; ui.cls = S.home; ui.nTargets = [S.home]; ui.wCls = S.home; ui.sel = {}; ui.nDirty = ui.wDirty = false; saveS(); renderAll(); toast('우리 반을 ' + S.home + '으로 저장했어요'); return; }
+    if (b.dataset.teacher !== undefined) { S.teacher = b.dataset.teacher; var hm = homeOf(S.teacher); if (hm && !S.home) { ui.cls = hm; ui.nTargets = [hm]; ui.wCls = hm; ui.nDirty = ui.wDirty = false; if (!Object.keys(T.dirty).some(function (k) { return T.dirty[k]; })) T.scope = hm; } saveS(); renderAll(); toast(S.teacher + ' 선생님으로 저장했어요'); return; }
+    if (b.dataset.home !== undefined) { S.home = b.dataset.home; ui.cls = S.home; ui.nTargets = [S.home]; ui.wCls = S.home; ui.sel = {}; if (!Object.keys(T.dirty).some(function (k) { return T.dirty[k]; })) T.scope = S.home; ui.nDirty = ui.wDirty = false; saveS(); renderAll(); toast('우리 반을 ' + S.home + '으로 저장했어요'); return; }
     if (b.dataset.tab) setTab(b.dataset.tab);
   });
   on('q', 'input', function (e) { ui.q = e.target.value; renderStudents(); });
@@ -593,6 +882,58 @@ ol.how b { color: var(--ink); }
     $('reGo').disabled = true; var err = await connect(p); $('reGo').disabled = false;
     if (err) { $('reErr').hidden = false; $('reErr').textContent = err; } else { $('reconBox').hidden = true; $('reText').value = ''; toast('연결을 바꿨어요'); }
   });
+  /* 공지 세 갈래 */
+  function setNp(k) {
+    ui.np = k; try { sessionStorage.setItem('ytc.np', k); } catch (e) {}
+    ['trans', 'urgent', 'word'].forEach(function (x) { $('np-' + x).hidden = x !== k; });
+    Array.prototype.forEach.call(document.querySelectorAll('#nSeg [data-np]'), function (b) { b.setAttribute('aria-selected', b.dataset.np === k ? 'true' : 'false'); });
+    $('scroller').scrollTop = 0;
+  }
+  on('nSeg', 'click', function (e) { var b = e.target.closest('[data-np]'); if (b) setNp(b.dataset.np); });
+  /* 전달사항 */
+  on('tScopes', 'click', function (e) { var b = e.target.closest('[data-ts]'); if (!b) return; T.scope = b.dataset.ts; T.armed = null; renderTrans(); });
+  on('tAdd', 'click', function () {
+    var sc = T.scope; T.rows[sc] = T.rows[sc] || [];
+    T.rows[sc].forEach(function (r) { r._open = false; });
+    T.rows[sc].unshift({ date: todayDash(), title: '', text: '', step: 1, _open: true });
+    tDirty(); renderTList();
+    var f = $('tList').querySelector('[data-f="title"]'); if (f) { f.focus(); f.scrollIntoView({ block: 'center' }); }
+  });
+  on('tList', 'click', function (e) {
+    var b = e.target.closest('button[data-act]'); if (!b) return;
+    var h = tRow(b); if (!h || !h.row) return; var r = h.row, act = b.dataset.act, rows = T.rows[T.scope];
+    if (act === 'toggle') { r._open = !r._open; h.it.classList.toggle('open', r._open); h.it.querySelector('.tbody').hidden = !r._open; b.setAttribute('aria-expanded', r._open); return; }
+    if (act === 'num') { var ti = h.it.querySelector('[data-f="title"]'); ti.value = applyNumber(ti.value, b.dataset.e); r.title = ti.value; tUpdateHead(h.it, r); tDirty(); return; }
+    if (act === 'lvl') { var ta = h.it.querySelector('[data-f="text"]'); applyLevel(ta, b.dataset.e); r.text = ta.value; tUpdateHead(h.it, r); tDirty(); return; }
+    if (act === 'always') { r.date = ''; h.it.querySelector('[data-f="date"]').value = ''; tUpdateHead(h.it, r); tDirty(); return; }
+    if (act === 'size') { r.step = Number(b.dataset.s); Array.prototype.forEach.call(h.it.querySelectorAll('[data-act="size"]'), function (x) { x.setAttribute('aria-checked', x === b ? 'true' : 'false'); }); tDirty(); return; }
+    if (act === 'up' || act === 'down') {
+      var i = rows.indexOf(r), j = i + (act === 'up' ? -1 : 1); if (i < 0 || j < 0 || j >= rows.length) return;
+      rows.splice(i, 1); rows.splice(j, 0, r); tDirty(); renderTList(); return;
+    }
+    if (act === 'del') {   // 두 번 눌러야 지워진다(주머니 속에서 눌려도 안전하게)
+      if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = '정말 삭제 · 한 번 더'; setTimeout(function () { if (b.isConnected) { delete b.dataset.armed; b.textContent = '🗑 삭제'; } }, 3000); return; }
+      rows.splice(rows.indexOf(r), 1); tDirty(); renderTList();
+    }
+  });
+  on('tList', 'input', function (e) {
+    var f = e.target.dataset && e.target.dataset.f; if (!f) return;
+    var h = tRow(e.target); if (!h || !h.row) return;
+    h.row[f] = e.target.value; tUpdateHead(h.it, h.row); tDirty();
+  });
+  on('tList', 'change', function (e) {
+    if (!e.target.dataset || e.target.dataset.f !== 'date') return;
+    var h = tRow(e.target); if (!h || !h.row) return; h.row.date = e.target.value; tUpdateHead(h.it, h.row); tDirty();
+  });
+  on('tList', 'mousedown', function (e) { if (e.target.closest('[data-act="num"],[data-act="lvl"]')) e.preventDefault(); });   // 눌러도 키보드·커서를 잃지 않게
+  document.addEventListener('selectionchange', function () { var a = document.activeElement; if (a && a.dataset && a.dataset.f === 'text') { a._s = a.selectionStart; a._e = a.selectionEnd; } });
+  on('tDraft', 'click', function () { tSave(false); });
+  on('tPost', 'click', function () { tSave(true); });
+  on('tDiscard', 'click', tDiscard);
+  /* 칠판 업데이트 알림 띠 → 설정의 칠판 목록으로 */
+  on('vBanner', 'click', function () { setTab('set'); setTimeout(function () { $('bdCard').scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); });
+  setInterval(function () { if (!document.hidden && D) refreshBoards(); }, 60000);
+
   var forgetT;
   on('forgetBtn', 'click', function () {
     var b = $('forgetBtn');
@@ -603,7 +944,7 @@ ol.how b { color: var(--ink); }
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; $('installBtn').hidden = false; });
   on('installBtn', 'click', async function () { if (!deferred) return; deferred.prompt(); try { await deferred.userChoice; } catch (e) {} deferred = null; $('installBtn').hidden = true; });
   window.addEventListener('appinstalled', function () { $('installBtn').hidden = true; toast('앱을 설치했어요'); });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && D) refreshRecent(); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && D) { refreshRecent(); refreshBoards(); } });
   setInterval(function () { if (!document.hidden && D && ui.tab === 'call') refreshRecent(); }, 20000);
   window.addEventListener('online', function () { if (S && !D) load(true); });
 
@@ -621,7 +962,7 @@ ol.how b { color: var(--ink); }
     }
     if (!S || !S.u || !S.k) { showConnect(''); return; }
     showMain();
-    try { var t = sessionStorage.getItem('ytc.tab'); if (t) ui.tab = t; } catch (e) {}
+    try { var t = sessionStorage.getItem('ytc.tab'); if (t) ui.tab = t; var np = sessionStorage.getItem('ytc.np'); if (np) setNp(np); } catch (e) {}
     $('stuGrid').innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
     var ok = await load(true);
     if (ok) setTab(S.teacher ? ui.tab : 'set');

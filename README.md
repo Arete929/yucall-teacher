@@ -8,7 +8,7 @@
 - 서버는 구글 Apps Script(전환기보드 `TeacherApi.js` 의 `doPost`) — 열쇠가 있어야만 열립니다.
 
 ## 파일
-`index.html`(앱 전체) · `sw.js`(서비스워커: 화면 뼈대만 저장, 서버 요청은 가로채지 않음) · `manifest.webmanifest` · `icons/`
+`index.html`(앱 전체, v1.1.0) · `sw.js`(서비스워커: 화면 뼈대만 저장, 서버 요청은 가로채지 않음) · `manifest.webmanifest` · `icons/`
 
 ## 연결 링크 만드는 법
 `https://arete929.github.io/yucall-teacher/#c=<코드>` — 코드는 `base64url(JSON {"u":"<…/exec>","k":"<교사 열쇠>"})`.
