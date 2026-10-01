@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2b78c0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1a1612" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="전환기 담임">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>전환기보드 담임</title>
+<style>
+/* 전환기보드 담임 — 담임 선생님이 폰으로 «호출»과 «공지»만 쓰는 앱.
+   칠판(전자칠판)의 따뜻한 종이색·파랑·노랑을 그대로 가져왔다. 폰(폴드 커버 화면 포함)은 한 줄 구성 + 아래 탭,
+   폴드를 펼친 화면·가로 화면(≥640px)은 «학생 고르기 | 호출 작성» 두 칸으로 저절로 바뀐다 — 접었다 펴도 상태는 그대로. */
+:root {
+  --bg: #f4eee4; --card: #fffaf3; --card2: #efe7da; --ink: #3d2c20; --ink2: #85705f; --line: #e1d6c5;
+  --blue: #2b78c0; --blue-ink: #ffffff; --blue-soft: #dbeaf8;
+  --yellow: #ffd97d; --yellow-ink: #5e3d05; --sel: #ffe29a; --sel-line: #c99a2a;
+  --green: #2f7d4a; --green-soft: #dcefe1; --red: #b4453f; --red-soft: #f6dedb;
+  --shadow: 0 1px 2px rgba(60,40,20,.08), 0 10px 26px -14px rgba(60,40,20,.30);
+  --r: 16px;
+  --font: "Pretendard Variable", Pretendard, "Noto Sans KR", "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17130f; --card: #231d17; --card2: #2e261e; --ink: #f2e9dd; --ink2: #b3a291; --line: #3a3228;
+    --blue: #7bbcf0; --blue-ink: #0d2236; --blue-soft: #1d3345;
+    --yellow: #f2c660; --yellow-ink: #2a1c02; --sel: #5b4716; --sel-line: #e1b24a;
+    --green: #6fcf8d; --green-soft: #1d3626; --red: #f09189; --red-soft: #432320;
+    --shadow: 0 1px 2px rgba(0,0,0,.5), 0 10px 26px -14px rgba(0,0,0,.8);
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── 껍데기 ── */
+#main { height: 100dvh; display: flex; flex-direction: column; padding-top: env(safe-area-inset-top); }
+.top { display: flex; align-items: center; gap: 12px; padding: 10px max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left)); }
+.brand { flex: 1; min-width: 0; }
+.brand b { display: block; font-size: 17px; font-weight: 900; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand small { display: flex; align-items: center; gap: 6px; color: var(--ink2); font-size: 13px; font-weight: 600; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex: none; }
+.dot.off { background: var(--red); }
+.icon-btn { width: 44px; height: 44px; border-radius: 14px; border: 1px solid var(--line); background: var(--card); display: grid; place-items: center; font-size: 20px; }
+.icon-btn.spin svg { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.icon-btn svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+main { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding: 4px max(16px, env(safe-area-inset-right)) 20px max(16px, env(safe-area-inset-left)); scroll-padding-bottom: 240px; }
+.wrapw { max-width: 1080px; margin: 0 auto; }
+.tabs { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--card); border-top: 1px solid var(--line); padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.tabs button { border: 0; background: none; min-height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 13px; font-weight: 700; color: var(--ink2); }
+.tabs button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.tabs button[aria-selected="true"] { color: var(--blue); }
+.tabs button[aria-selected="true"] span { box-shadow: inset 0 -3px 0 var(--blue); padding-bottom: 1px; }
+
+/* ── 공통 부품 ── */
+h2 { font-size: 15px; font-weight: 900; margin: 0 0 10px; letter-spacing: -.01em; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+h2 small { font-size: 12.5px; font-weight: 600; color: var(--ink2); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); padding: 16px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; gap: 6px; }
+.chip[aria-pressed="true"], .chip[aria-checked="true"] { background: var(--blue); border-color: var(--blue); color: var(--blue-ink); }
+.chip em { font-style: normal; font-size: 11.5px; font-weight: 800; background: var(--yellow); color: var(--yellow-ink); border-radius: 999px; padding: 1px 7px; }
+.chips.scroll { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -2px; padding: 2px; }
+.chips.scroll::-webkit-scrollbar { display: none; }
+.chips.scroll .chip { flex: none; }
+.chips.scroll .chip.cls { flex: 1 1 0; min-width: 52px; justify-content: center; padding: 0 6px; white-space: nowrap; }
+.chip.soft { font-weight: 700; font-size: 14px; min-height: 40px; }
+.btn { min-height: 52px; padding: 0 20px; border-radius: 14px; border: 0; font-weight: 900; font-size: 17px; letter-spacing: -.01em; }
+.btn.primary { background: var(--blue); color: var(--blue-ink); }
+.btn.call { background: var(--yellow); color: var(--yellow-ink); box-shadow: inset 0 -3px 0 rgba(0,0,0,.14); }
+.btn.ghost { background: var(--card2); color: var(--ink); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn:active:not(:disabled) { transform: scale(.985); }
+.field { width: 100%; border: 1.5px solid var(--line); border-radius: 14px; background: var(--card); padding: 12px 14px; font-size: 16px; line-height: 1.5; resize: vertical; }
+.field:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 25%, transparent); }
+.count { text-align: right; font-size: 12.5px; color: var(--ink2); margin-top: 4px; font-variant-numeric: tabular-nums; }
+.stamp { font-size: 12.5px; color: var(--ink2); margin-top: 8px; min-height: 1.4em; }
+.live { font-size: 13.5px; background: var(--card2); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; color: var(--ink2); }
+.live b { color: var(--ink); font-weight: 700; }
+.rowbtns { display: flex; gap: 10px; margin-top: 12px; }
+.rowbtns .btn { flex: 1; }
+.rowbtns .btn.ghost { flex: 0 0 auto; }
+.empty { color: var(--ink2); font-size: 14px; padding: 18px 4px; text-align: center; }
+.skel { height: 56px; border-radius: 14px; background: linear-gradient(90deg, var(--card2), var(--card), var(--card2)); background-size: 200% 100%; animation: sh 1.2s linear infinite; }
+@keyframes sh { to { background-position: -200% 0; } }
+
+/* ── 호출 화면 ── */
+.call-grid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "stu" "recent" "compose"; align-items: start; }
+.pane-stu { grid-area: stu; display: grid; gap: 12px; }
+.searchrow { display: flex; gap: 8px; }
+.searchrow input { flex: 1; min-width: 0; }
+.searchrow .btn { min-height: 48px; font-size: 14px; padding: 0 14px; }
+.stu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.stu { position: relative; min-height: 60px; border-radius: 14px; border: 1.5px solid var(--line); background: var(--card); padding: 8px 6px 8px 10px; text-align: left; display: grid; align-content: center; gap: 0; }
+.stu i { font-style: normal; font-size: 12px; font-weight: 800; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.stu b { font-size: 16.5px; font-weight: 800; letter-spacing: -.02em; overflow-wrap: anywhere; line-height: 1.25; }
+.stu[aria-pressed="true"] { background: var(--sel); border-color: var(--sel-line); }
+.stu[aria-pressed="true"]::after { content: "✓"; position: absolute; right: 8px; top: 5px; font-size: 13px; font-weight: 900; color: var(--yellow-ink); }
+.pane-compose { grid-area: compose; position: sticky; bottom: 0; z-index: 3; margin: 0 -16px -20px; padding: 12px 16px calc(14px + 8px); background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -10px 24px -14px rgba(60,40,20,.35); display: grid; gap: 10px; }
+.pane-recent { grid-area: recent; }
+.sel-sum { font-weight: 800; font-size: 15px; display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.sel-sum small { font-weight: 600; color: var(--ink2); font-size: 12.5px; }
+.pane-compose.empty .extra { display: none; }
+.pane-compose textarea { min-height: 50px; }
+.rc { display: grid; gap: 8px; }
+.rc-item { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; padding: 11px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; }
+.rc-item time { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 13px; color: var(--ink2); }
+.rc-item b { font-weight: 800; }
+.rc-item small { grid-column: 2 / 4; color: var(--ink2); font-size: 13px; overflow-wrap: anywhere; }
+.pill { font-size: 12px; font-weight: 800; border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.pill.ok { background: var(--green-soft); color: var(--green); }
+.pill.wait { background: var(--card2); color: var(--ink2); }
+
+@media (min-width: 640px) {
+  main { padding-top: 8px; }
+  .call-grid { grid-template-columns: minmax(0, 1fr) minmax(260px, 310px); grid-template-areas: "stu compose" "stu recent"; gap: 16px; }
+  .chips.scroll { flex-wrap: wrap; overflow: visible; }
+  .pane-compose { position: sticky; top: 8px; bottom: auto; margin: 0; padding: 16px; border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); }
+  .pane-recent { position: static; }
+  .stu-grid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+  .nt-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 400px) {
+  .stu-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .chip { padding: 0 13px; font-size: 14.5px; }
+  .btn { font-size: 16px; }
+  h2 { font-size: 14.5px; }
+}
+
+/* ── 공지 화면 ── */
+.nt-grid { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+.nt-target { grid-column: 1 / -1; }
+.band { margin-top: 12px; border-radius: 12px; background: var(--yellow); color: var(--yellow-ink); padding: 10px 12px; font-weight: 700; display: flex; gap: 10px; align-items: baseline; }
+.band b { font-size: 12px; background: rgba(255,255,255,.55); border-radius: 10px; padding: 2px 9px; flex: none; }
+.band span { overflow-wrap: anywhere; line-height: 1.35; }
+.band.l2 span { font-size: 1.15em; } .band.l3 span { font-size: 1.3em; }
+.sizes { margin-top: 10px; }
+
+/* ── 설정 · 연결 ── */
+.stack { display: grid; gap: 14px; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; }
+.kv dt { color: var(--ink2); } .kv dd { margin: 0; font-weight: 700; overflow-wrap: anywhere; }
+.hint { color: var(--ink2); font-size: 13.5px; margin: 8px 0 0; }
+.hint b { color: var(--ink); }
+.screen { min-height: 100dvh; padding: calc(24px + env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); display: grid; align-content: center; justify-items: center; }
+.connect { width: 100%; max-width: 520px; display: grid; gap: 16px; }
+.connect .logo { width: 72px; height: 72px; border-radius: 20px; box-shadow: var(--shadow); }
+.connect h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -.03em; line-height: 1.2; }
+.connect p { margin: 0; color: var(--ink2); }
+.err { color: var(--red); background: var(--red-soft); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-weight: 700; }
+ol.how { margin: 0; padding-left: 20px; color: var(--ink2); font-size: 14px; display: grid; gap: 4px; }
+ol.how b { color: var(--ink); }
+
+/* ── 토스트 ── */
+#toast { position: fixed; left: 50%; top: calc(10px + env(safe-area-inset-top)); transform: translate(-50%, -16px); opacity: 0; pointer-events: none; z-index: 50; max-width: min(92vw, 460px); background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 14px; font-weight: 700; font-size: 15px; box-shadow: 0 10px 30px rgba(0,0,0,.35); transition: opacity .2s, transform .2s; text-align: center; }
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
+#toast.bad { background: var(--red); color: #fff; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01s !important; transition-duration: .01s !important; } }
+</style>
+</head>
+<body>
+
+<noscript><p style="padding:24px">이 앱은 자바스크립트가 필요합니다.</p></noscript>
+
+<!-- ───────── 처음 연결 ───────── -->
+<section id="connect" class="screen" hidden>
+  <div class="connect">
+    <img class="logo" src="icons/icon-192.png" alt="">
+    <h1>전환기보드 담임</h1>
+    <p>우리 반 칠판에 <b>공지</b>를 올리고, 학생을 <b>호출</b>하는 담임 선생님용 앱이에요.</p>
+    <div class="card stack">
+      <div>
+        <h2>선생님 화면 주소를 붙여 넣어 주세요</h2>
+        <textarea id="cxText" class="field" rows="3" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec?role=teacher&k=…"></textarea>
+        <p class="hint">컴퓨터에서 쓰던 <b>교사용 주소</b> 그대로 붙여 넣으면 됩니다. 또는 학년부에서 받은 <b>연결 링크</b>를 누르면 저절로 연결돼요.</p>
+      </div>
+      <div id="cxErr" class="err" hidden></div>
+      <button id="cxGo" class="btn primary" type="button">연결하기</button>
+    </div>
+    <ol class="how">
+      <li>연결은 <b>이 폰에만</b> 저장돼요. 다른 사람에게 이 주소를 알려 주지 마세요.</li>
+      <li>연결한 뒤 크롬 메뉴 ⋮ → <b>홈 화면에 추가</b>(또는 <b>앱 설치</b>)를 하면 앱처럼 열립니다.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ───────── 본 화면 ───────── -->
+<div id="main" hidden>
+  <header class="top">
+    <div class="brand"><b id="boardTitle">전환기보드 담임</b><small><i class="dot" id="dot"></i><span id="who">연결 중…</span></small></div>
+    <button id="syncBtn" class="icon-btn" type="button" aria-label="새로 고침"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+  </header>
+
+  <main id="scroller">
+    <div class="wrapw">
+
+      <!-- 호출 -->
+      <section id="v-call" role="tabpanel" aria-labelledby="t-call">
+        <div class="call-grid">
+          <div class="pane-stu">
+            <div class="chips scroll" id="clsChips" role="group" aria-label="반"></div>
+            <div class="searchrow">
+              <input id="q" class="field" type="search" inputmode="search" enterkeyhint="search" placeholder="이름·번호로 찾기" autocomplete="off" aria-label="이름 또는 번호로 찾기">
+              <button id="selAll" class="btn ghost" type="button">전체 선택</button>
+            </div>
+            <div class="stu-grid" id="stuGrid"></div>
+          </div>
+          <div class="pane-recent">
+            <h2>오늘 호출 <small id="rcHint"></small></h2>
+            <div class="rc" id="recent"></div>
+          </div>
+          <div class="pane-compose empty" id="compose">
+            <div class="sel-sum"><span id="selTxt">학생을 눌러 고르세요</span><small id="selCnt"></small></div>
+            <div class="extra">
+              <div class="chips scroll" id="msgChips" role="group" aria-label="자주 쓰는 메시지"></div>
+              <textarea id="msg" class="field" rows="1" maxlength="200" placeholder="학생 화면에 뜨는 메시지 (선택)"></textarea>
+            </div>
+            <button id="callBtn" class="btn call" type="button" disabled>📣 호출하기</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 공지 -->
+      <section id="v-notice" role="tabpanel" aria-labelledby="t-notice" hidden>
+        <div class="nt-grid">
+          <div class="card nt-target">
+            <h2>긴급 공지를 올릴 칠판 <small>여러 곳을 함께 골라도 돼요</small></h2>
+            <div class="chips" id="nTargets" role="group" aria-label="공지 대상"></div>
+          </div>
+          <div class="card">
+            <h2>📢 긴급 공지 <small>칠판 맨 위 노란 띠</small></h2>
+            <div class="live" id="nLive"></div>
+            <textarea id="nText" class="field" rows="4" maxlength="200" placeholder="예: 5교시 체육 → 체육관에서 합니다"></textarea>
+            <div class="count" id="nCount">0 / 200자</div>
+            <div class="chips sizes" id="nSizes" role="radiogroup" aria-label="글자 크기"></div>
+            <div class="band" id="nBand" hidden><b>📢 긴급 공지</b><span id="nBandTx"></span></div>
+            <div class="rowbtns"><button id="nPost" class="btn primary" type="button">올리기</button><button id="nClear" class="btn ghost" type="button">내리기</button></div>
+            <div class="stamp" id="nStamp" role="status"></div>
+          </div>
+          <div class="card">
+            <h2>💬 담임 한 마디 <small>우리 반 칠판에만</small></h2>
+            <div class="chips" id="wTargets" role="radiogroup" aria-label="한 마디를 올릴 반"></div>
+            <div class="live" id="wLive" style="margin-top:10px"></div>
+            <textarea id="wText" class="field" rows="3" maxlength="120" placeholder="예: 오늘도 수고했어요. 내일은 진로체험, 실내화 챙기기!"></textarea>
+            <div class="count" id="wCount">0 / 120자</div>
+            <div class="rowbtns"><button id="wPost" class="btn primary" type="button">올리기</button><button id="wClear" class="btn ghost" type="button">내리기</button></div>
+            <div class="stamp" id="wStamp" role="status"></div>
+          </div>
+          <p class="hint nt-target">칠판은 교실의 누구나 볼 수 있어요 — <b>학생 이름·상담 내용은 적지 마세요.</b> 올리면 칠판에 몇 초~3분 안에 바뀝니다.</p>
+        </div>
+      </section>
+
+      <!-- 설정 -->
+      <section id="v-set" role="tabpanel" aria-labelledby="t-set" hidden>
+        <div class="stack">
+          <div class="card">
+            <h2>👤 선생님 <small id="whoHint"></small></h2>
+            <div class="chips" id="teacherChips" role="radiogroup" aria-label="선생님"></div>
+            <p class="hint">호출할 때 <b>누가 불렀는지</b>가 칠판에 함께 뜹니다. 한 번 고르면 이 폰이 기억해요.</p>
+          </div>
+          <div class="card">
+            <h2>🏫 우리 반 <small>처음 열 때 이 반이 선택돼요</small></h2>
+            <div class="chips" id="homeChips" role="radiogroup" aria-label="우리 반"></div>
+          </div>
+          <div class="card">
+            <h2>🔗 연결</h2>
+            <dl class="kv"><dt>칠판</dt><dd id="kvTitle">—</dd><dt>서버</dt><dd id="kvBuild">—</dd><dt>앱</dt><dd id="kvApp"></dd></dl>
+            <div class="rowbtns"><button id="installBtn" class="btn primary" type="button" hidden>📲 앱으로 설치</button><button id="reconnectBtn" class="btn ghost" type="button">주소 다시 넣기</button></div>
+            <div id="reconBox" hidden style="margin-top:12px">
+              <textarea id="reText" class="field" rows="3" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="교사용 주소를 붙여 넣으세요"></textarea>
+              <div id="reErr" class="err" hidden style="margin-top:8px"></div>
+              <div class="rowbtns"><button id="reGo" class="btn primary" type="button">바꾸기</button></div>
+            </div>
+            <p class="hint">홈 화면에 아이콘이 없다면: 크롬 메뉴 ⋮ → <b>홈 화면에 추가</b> / 삼성 인터넷 ☰ → <b>현재 페이지 추가 → 홈 화면</b> / 아이폰 사파리 공유 → <b>홈 화면에 추가</b>.</p>
+            <div class="rowbtns" style="margin-top:6px"><button id="forgetBtn" class="btn ghost" type="button" style="color:var(--red)">이 폰에서 연결 해제</button></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <nav class="tabs" role="tablist" aria-label="화면">
+    <button id="t-call" role="tab" aria-selected="true" data-tab="call"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9v6h3l5 4V5L8 9H5z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span>호출</span></button>
+    <button id="t-notice" role="tab" aria-selected="false" data-tab="notice"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M8 21h8M12 17v4M7.5 9h9M7.5 12.5h5"/></svg><span>공지</span></button>
+    <button id="t-set" role="tab" aria-selected="false" data-tab="set"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg><span>내 설정</span></button>
+  </nav>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+  var APP_VERSION = '1.0.0';
+  var LS = 'ytc1';
+  var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
+  var SIZES = [[1, '기본'], [2, '크게'], [3, '더 크게']];
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  /* ── 저장 · 상태 ── */
+  var S = loadS();            // {u, k, teacher, home}
+  var D = null;               // 서버가 준 반·학생·선생님·공지
+  var ui = { tab: 'call', cls: '', sel: {}, q: '', nTargets: [], nStep: 1, nDirty: false, wCls: '', wDirty: false, sending: false };
+  function loadS() { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { return null; } }
+  function saveS() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
+
+  /* ── 연결 주소 해석: 교사용 주소(…/exec?role=teacher&k=…) 또는 연결 링크의 #c= 코드 ── */
+  var EXEC_RE = /https:\/\/script\.google\.com\/(?:macros\/|a\/macros\/[A-Za-z0-9.\-]+\/|a\/[A-Za-z0-9.\-]+\/macros\/)s\/[A-Za-z0-9_\-]{20,}\/exec/;
+  function parseConn(txt) {
+    txt = String(txt || '').trim();
+    var m = txt.match(/(?:^|[#&?\s])c=([A-Za-z0-9_\-]{20,})/) || txt.match(/^(YTC1[.:])?([A-Za-z0-9_\-]{40,})$/);
+    var code = m && (m[2] || m[1]);
+    if (code && !EXEC_RE.test(txt)) {
+      try {
+        var j = JSON.parse(decodeURIComponent(escape(atob(code.replace(/-/g, '+').replace(/_/g, '/')))));
+        if (j && EXEC_RE.test(j.u || '') && /^[A-Za-z0-9]{20,}$/.test(j.k || '')) return { u: j.u.match(EXEC_RE)[0], k: j.k };
+      } catch (e) {}
+    }
+    var u = txt.match(EXEC_RE), k = txt.match(/[?&]k=([A-Za-z0-9]{20,})/);
+    return (u && k) ? { u: u[0], k: k[1] } : null;
+  }
+
+  /* ── 서버 ── */
+  async function api(op, data, tries) {
+    tries = tries || 1;
+    var body = JSON.stringify(Object.assign({ k: S.k, op: op }, data || {}));
+    for (var i = 0; i < tries; i++) {
+      var ctl = new AbortController(), timer = setTimeout(function () { ctl.abort(); }, 30000);
+      try {
+        var r = await fetch(S.u, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: body, signal: ctl.signal });
+        clearTimeout(timer);
+        return await r.json();
+      } catch (e) {
+        clearTimeout(timer);
+        if (i === tries - 1) return { ok: false, net: true, msg: navigator.onLine ? '서버가 바로 답하지 않아요. 잠시 뒤 다시 눌러 주세요.' : '인터넷에 연결되지 않았어요.' };
+      }
+    }
+  }
+
+  var toastT;
+  function toast(msg, bad) { var t = $('toast'); t.textContent = msg; t.className = 'on' + (bad ? ' bad' : ''); clearTimeout(toastT); toastT = setTimeout(function () { t.className = ''; }, bad ? 4800 : 2800); }
+  function now() { var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
+
+  /* ── 화면 전환 ── */
+  function showConnect(msg) { $('main').hidden = true; $('connect').hidden = false; $('cxErr').hidden = !msg; $('cxErr').textContent = msg || ''; }
+  function showMain() { $('connect').hidden = true; $('main').hidden = false; }
+  function setTab(t) {
+    ui.tab = t; try { sessionStorage.setItem('ytc.tab', t); } catch (e) {}
+    ['call', 'notice', 'set'].forEach(function (n) { $('v-' + n).hidden = n !== t; $('t-' + n).setAttribute('aria-selected', n === t ? 'true' : 'false'); });
+    $('scroller').scrollTop = 0;
+    if (t === 'call') refreshRecent();
+  }
+
+  /* ── 불러오기 ── */
+  async function load(initial) {
+    $('syncBtn').classList.add('spin');
+    var r = await api('init', null, 2);
+    $('syncBtn').classList.remove('spin');
+    if (!r || !r.ok) {
+      if (r && r.denied) { showConnect(r.msg); return false; }
+      $('dot').classList.add('off'); $('who').textContent = '연결 안 됨 — ' + ((r && r.msg) || '');
+      if (!initial) toast((r && r.msg) || '불러오지 못했어요', true);
+      return false;
+    }
+    D = r;
+    $('dot').classList.remove('off');
+    if (!ui.cls || !findClass(ui.cls)) ui.cls = S.home || homeOf(S.teacher) || (D.classes[0] && D.classes[0].cls) || '';
+    if (!ui.nTargets.length) ui.nTargets = [ui.cls];
+    if (!ui.wCls) ui.wCls = ui.cls;
+    renderAll();
+    return true;
+  }
+  function clsLabel(c) { var one = D && D.classes.every(function (x) { return x.grade === D.classes[0].grade; }); return one ? c.split('-')[1] + '반' : c.replace('-', '학년 ') + '반'; }
+  function findClass(c) { return D && D.classes.filter(function (x) { return x.cls === c; })[0]; }
+  function homeOf(name) { var t = D && D.teachers.filter(function (x) { return x.name === name; })[0]; return t ? t.homeroom : ''; }
+
+  function renderAll() {
+    $('boardTitle').textContent = D.boardTitle || '전환기보드 담임';
+    $('who').textContent = S.teacher ? S.teacher + ' 선생님' : '선생님을 골라 주세요';
+    renderCls(); renderStudents(); renderCompose(); renderRecent();
+    if (!ui.nDirty) loadNoticeFields();
+    if (!ui.wDirty) loadWordField();
+    renderNotice(); renderSettings();
+  }
+
+  /* ── 호출 ── */
+  function renderCls() {
+    var home = S.home || homeOf(S.teacher);
+    $('clsChips').innerHTML = D.classes.map(function (c) {
+      return '<button type="button" class="chip cls" data-cls="' + esc(c.cls) + '" aria-pressed="' + (c.cls === ui.cls) + '">' + (c.cls === home ? '★ ' : '') + esc(clsLabel(c.cls)) + '</button>';
+    }).join('');
+  }
+  function visibleStudents() {
+    var c = findClass(ui.cls); if (!c) return [];
+    var q = ui.q.trim();
+    return c.students.filter(function (s) { return !q || String(s[1]).indexOf(q) >= 0 || String(s[0]) === q.replace(/번$/, ''); });
+  }
+  function renderStudents() {
+    var list = visibleStudents();
+    if (!findClass(ui.cls)) { $('stuGrid').innerHTML = '<div class="skel"></div>'; return; }
+    $('stuGrid').innerHTML = list.length ? list.map(function (s) {
+      return '<button type="button" class="stu" data-num="' + s[0] + '" aria-pressed="' + !!ui.sel[s[0]] + '"><i>' + s[0] + '번</i><b>' + esc(s[1]) + '</b></button>';
+    }).join('') : '<div class="empty" style="grid-column:1/-1">찾는 학생이 없어요</div>';
+    var allOn = list.length && list.every(function (s) { return ui.sel[s[0]]; });
+    $('selAll').textContent = allOn ? '선택 해제' : '전체 선택';
+  }
+  function selectedList() {
+    var c = findClass(ui.cls); if (!c) return [];
+    return c.students.filter(function (s) { return ui.sel[s[0]]; });
+  }
+  function renderCompose() {
+    var sel = selectedList(), n = sel.length;
+    $('compose').classList.toggle('empty', !n);
+    $('selTxt').textContent = n ? (sel.slice(0, 3).map(function (s) { return s[1]; }).join(' · ') + (n > 3 ? ' 외 ' + (n - 3) + '명' : '')) : '학생을 눌러 고르세요';
+    $('selCnt').textContent = n ? n + '명 선택' : '';
+    $('callBtn').disabled = !n || ui.sending;
+    $('callBtn').textContent = ui.sending ? '보내는 중…' : (n ? '📣 ' + n + '명 호출하기' : '📣 호출하기');
+    var cur = $('msg').value.trim();
+    $('msgChips').innerHTML = QUICK.map(function (m) { return '<button type="button" class="chip soft" data-msg="' + esc(m) + '" aria-pressed="' + (cur === m) + '">' + esc(m) + '</button>'; }).join('');
+  }
+  async function doCall() {
+    if (ui.sending) return;
+    if (!S.teacher) { setTab('set'); toast('먼저 선생님 이름을 골라 주세요', true); return; }
+    var sel = selectedList(); if (!sel.length) return;
+    var c = findClass(ui.cls);
+    ui.sending = true; renderCompose();
+    var r = await api('call', { teacher: S.teacher, grade: c.grade, classNum: c.classNum, message: $('msg').value.trim(),
+      students: sel.map(function (s) { return { num: s[0], name: s[1] }; }) }, 1);
+    ui.sending = false;
+    if (r && r.sent) {
+      var first = sel[0][1];
+      toast('✅ ' + (r.sent > 1 ? first + ' 외 ' + (r.sent - 1) + '명' : first) + ' 호출했어요 · ' + now().slice(11, 16) + (r.failed && r.failed.length ? ' (실패 ' + r.failed.length + ')' : ''), !!(r.failed && r.failed.length));
+      ui.sel = {}; $('msg').value = '';
+      renderStudents(); renderCompose();
+      setTimeout(refreshRecent, 1500);
+    } else {
+      toast((r && r.msg) || '호출하지 못했어요', true); renderCompose();
+    }
+  }
+  async function refreshRecent() {
+    if (!D || ui.tab !== 'call') return;
+    var r = await api('calls', {}, 1);
+    if (r && r.ok) { D.recent = r.calls; renderRecent(); }
+  }
+  function renderRecent() {
+    var list = (D.recent || []).filter(function (x) { return (x.grade + '-' + x.classNum) === ui.cls; });
+    $('rcHint').textContent = ui.cls ? ui.cls + ' · 칠판이 확인하면 「확인됨」' : '';
+    $('recent').innerHTML = list.length ? list.map(function (x) {
+      return '<div class="rc-item"><time>' + esc(x.time) + '</time><b>' + esc(x.num) + '번 ' + esc(x.name) + '</b><span class="pill ' + (x.done ? 'ok' : 'wait') + '">' + (x.done ? '확인됨' : '대기') + '</span>' +
+        (x.message ? '<small>' + esc(x.message) + ' · ' + esc(x.teacher) + '</small>' : '<small>' + esc(x.teacher) + '</small>') + '</div>';
+    }).join('') : '<div class="empty">오늘 이 반에 한 호출이 없어요</div>';
+  }
+
+  /* ── 공지 ── */
+  function renderNotice() {
+    var chips = [{ v: '전체', t: '학년 전체' }].concat(D.classes.map(function (c) { return { v: c.cls, t: clsLabel(c.cls) }; }));
+    $('nTargets').innerHTML = chips.map(function (c) { return '<button type="button" class="chip" data-nt="' + esc(c.v) + '" aria-pressed="' + (ui.nTargets.indexOf(c.v) >= 0) + '">' + esc(c.t) + '</button>'; }).join('');
+    $('nSizes').innerHTML = '<span style="align-self:center;font-size:13px;color:var(--ink2);font-weight:700">글자</span>' + SIZES.map(function (s) { return '<button type="button" class="chip soft" role="radio" data-step="' + s[0] + '" aria-checked="' + (ui.nStep === s[0]) + '">' + s[1] + '</button>'; }).join('');
+    var one = ui.nTargets.length === 1 ? ui.nTargets[0] : '';
+    var cur = one && D.notices[one];
+    if (!one) $('nLive').innerHTML = ui.nTargets.length ? '여러 곳을 골랐어요 — <b>같은 문구가 모두에 올라가요.</b>' : '올릴 칠판을 골라 주세요.';
+    else $('nLive').innerHTML = cur && cur.notice ? '지금 <b>' + esc(one === '전체' ? '학년 전체' : one) + '</b> 칠판: ' + esc(cur.notice) + '<br><small>' + esc(cur.by || '') + ' · ' + esc(cur.at || '') + '</small>' : '지금 <b>' + esc(one === '전체' ? '학년 전체' : one) + '</b> 칠판에 걸린 공지가 없어요.';
+    countN(); bandN();
+    // 담임 한 마디
+    $('wTargets').innerHTML = D.classes.map(function (c) { return '<button type="button" class="chip" role="radio" data-wt="' + esc(c.cls) + '" aria-checked="' + (c.cls === ui.wCls) + '">' + esc(clsLabel(c.cls)) + '</button>'; }).join('');
+    var w = D.words[ui.wCls];
+    $('wLive').innerHTML = w && w.text ? '지금 <b>' + esc(ui.wCls) + '</b> 칠판: ' + esc(w.text) + '<br><small>' + esc(w.by || '') + ' · ' + esc(w.at || '') + '</small>' : '지금 <b>' + esc(ui.wCls) + '</b> 칠판에 걸린 한 마디가 없어요.';
+    countW();
+  }
+  // 대상을 바꾸거나 새로 불러왔을 때만 입력칸을 그 칠판의 현재 내용으로 채운다(쓰던 글을 덮지 않도록)
+  function loadNoticeFields() { var one = ui.nTargets.length === 1 ? ui.nTargets[0] : '', cur = one && D.notices[one]; if (one) { $('nText').value = cur ? cur.notice : ''; ui.nStep = cur ? Math.min(cur.noticeStep || 1, 3) : 1; } }
+  function loadWordField() { var w = D.words[ui.wCls]; $('wText').value = w ? w.text : ''; }
+  function countN() { $('nCount').textContent = $('nText').value.length + ' / 200자'; }
+  function countW() { $('wCount').textContent = $('wText').value.length + ' / 120자'; }
+  function bandN() { var t = $('nText').value.trim(); $('nBand').hidden = !t; $('nBand').className = 'band' + (ui.nStep > 1 ? ' l' + ui.nStep : ''); $('nBandTx').textContent = t; }
+  async function saveNotice(clear) {
+    if (!S.teacher) { setTab('set'); toast('먼저 선생님 이름을 골라 주세요', true); return; }
+    if (!ui.nTargets.length) { toast('올릴 칠판을 골라 주세요', true); return; }
+    var text = clear ? '' : $('nText').value.trim();
+    if (!clear && !text) { toast('공지 내용을 적어 주세요 (내리려면 「내리기」)', true); return; }
+    $('nPost').disabled = $('nClear').disabled = true;
+    var r = await api('saveNotice', { teacher: S.teacher, classes: ui.nTargets, notice: text, step: ui.nStep }, 2);
+    $('nPost').disabled = $('nClear').disabled = false;
+    if (r && r.ok) {
+      var at = r.savedAt || now();
+      (r.saved || []).forEach(function (c) { if (text) D.notices[c] = { notice: text, noticeStep: ui.nStep, by: S.teacher, at: at }; else delete D.notices[c]; });
+      if (clear) { $('nText').value = ''; }
+      ui.nDirty = false;
+      $('nStamp').textContent = (clear ? '✅ 내림 · ' : '✅ 올림 · ') + at + (r.failed && r.failed.length ? ' (일부 실패: ' + r.failed.map(function (f) { return f.cls; }).join(', ') + ')' : '');
+      toast(clear ? '공지를 내렸어요' : '공지를 올렸어요 — 칠판에 곧 떠요', !!(r.failed && r.failed.length));
+      renderNotice();
+    } else toast((r && r.msg) || '저장하지 못했어요', true);
+  }
+  async function saveWord(clear) {
+    if (!S.teacher) { setTab('set'); toast('먼저 선생님 이름을 골라 주세요', true); return; }
+    var text = clear ? '' : $('wText').value.trim();
+    if (!clear && !text) { toast('한 마디를 적어 주세요 (내리려면 「내리기」)', true); return; }
+    $('wPost').disabled = $('wClear').disabled = true;
+    var r = await api('saveWord', { teacher: S.teacher, cls: ui.wCls, text: text }, 2);
+    $('wPost').disabled = $('wClear').disabled = false;
+    if (r && r.ok) {
+      if (r.text) D.words[ui.wCls] = { text: r.text, at: r.at, by: S.teacher }; else delete D.words[ui.wCls];
+      if (clear) $('wText').value = '';
+      ui.wDirty = false;
+      $('wStamp').textContent = (clear ? '✅ 내림 · ' : '✅ 올림 · ') + (r.at || now());
+      toast(clear ? '한 마디를 내렸어요' : '담임 한 마디를 올렸어요', false);
+      renderNotice();
+    } else toast((r && r.msg) || '저장하지 못했어요', true);
+  }
+
+  /* ── 설정 ── */
+  function renderSettings() {
+    $('teacherChips').innerHTML = D.teachers.length ? D.teachers.map(function (t) {
+      return '<button type="button" class="chip" role="radio" data-teacher="' + esc(t.name) + '" aria-checked="' + (t.name === S.teacher) + '">' + esc(t.name) + (t.homeroom ? '<em>' + esc(t.homeroom) + '</em>' : '') + '</button>';
+    }).join('') : '<div class="empty">시트 「교사목록」에 선생님이 없어요</div>';
+    $('whoHint').textContent = S.teacher ? '' : '← 먼저 골라 주세요';
+    var home = S.home || homeOf(S.teacher);
+    $('homeChips').innerHTML = D.classes.map(function (c) { return '<button type="button" class="chip" role="radio" data-home="' + esc(c.cls) + '" aria-checked="' + (c.cls === home) + '">' + esc(clsLabel(c.cls)) + '</button>'; }).join('');
+    $('kvTitle').textContent = D.boardTitle || '—'; $('kvBuild').textContent = 'v' + (D.build || '?'); $('kvApp').textContent = 'v' + APP_VERSION;
+  }
+
+  /* ── 연결 ── */
+  async function connect(parsed, errBoxId) {
+    var prev = S; S = { u: parsed.u, k: parsed.k, teacher: (prev && prev.teacher) || '', home: (prev && prev.home) || '' };
+    var r = await api('init', null, 2);
+    if (!r || !r.ok) { S = prev; return (r && r.msg) || '연결하지 못했어요'; }
+    D = r; saveS();   // 선생님 이름은 자동으로 고르지 않는다 — 남의 이름으로 호출하지 않게, 본인이 직접 고르게 한다
+    showMain();
+    ui.cls = S.home || homeOf(S.teacher) || (D.classes[0] && D.classes[0].cls) || '';
+    ui.nTargets = [ui.cls]; ui.wCls = ui.cls;
+    renderAll();
+    setTab(S.teacher ? 'call' : 'set');
+    if (!S.teacher) toast('먼저 선생님 이름을 골라 주세요');
+    return '';
+  }
+
+  /* ── 이벤트 ── */
+  function on(id, ev, fn) { $(id).addEventListener(ev, fn); }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.cls !== undefined) { ui.cls = b.dataset.cls; ui.sel = {}; ui.q = ''; $('q').value = ''; renderCls(); renderStudents(); renderCompose(); renderRecent(); return; }
+    if (b.dataset.num !== undefined) { var n = b.dataset.num; if (ui.sel[n]) delete ui.sel[n]; else ui.sel[n] = true; renderStudents(); renderCompose(); return; }
+    if (b.dataset.msg !== undefined) { var m = b.dataset.msg; $('msg').value = $('msg').value.trim() === m ? '' : m; renderCompose(); return; }
+    if (b.dataset.nt !== undefined) { var i = ui.nTargets.indexOf(b.dataset.nt); if (i >= 0) ui.nTargets.splice(i, 1); else ui.nTargets.push(b.dataset.nt); ui.nDirty = false; loadNoticeFields(); renderNotice(); return; }
+    if (b.dataset.step !== undefined) { ui.nStep = Number(b.dataset.step); renderNotice(); return; }
+    if (b.dataset.wt !== undefined) { ui.wCls = b.dataset.wt; ui.wDirty = false; loadWordField(); renderNotice(); return; }
+    if (b.dataset.teacher !== undefined) { S.teacher = b.dataset.teacher; var hm = homeOf(S.teacher); if (hm && !S.home) { ui.cls = hm; ui.nTargets = [hm]; ui.wCls = hm; ui.nDirty = ui.wDirty = false; } saveS(); renderAll(); toast(S.teacher + ' 선생님으로 저장했어요'); return; }
+    if (b.dataset.home !== undefined) { S.home = b.dataset.home; ui.cls = S.home; ui.nTargets = [S.home]; ui.wCls = S.home; ui.sel = {}; ui.nDirty = ui.wDirty = false; saveS(); renderAll(); toast('우리 반을 ' + S.home + '으로 저장했어요'); return; }
+    if (b.dataset.tab) setTab(b.dataset.tab);
+  });
+  on('q', 'input', function (e) { ui.q = e.target.value; renderStudents(); });
+  on('selAll', 'click', function () {
+    var list = visibleStudents(), allOn = list.length && list.every(function (s) { return ui.sel[s[0]]; });
+    list.forEach(function (s) { if (allOn) delete ui.sel[s[0]]; else ui.sel[s[0]] = true; });
+    renderStudents(); renderCompose();
+  });
+  on('msg', 'input', function () { renderCompose(); });
+  on('callBtn', 'click', doCall);
+  on('nText', 'input', function () { ui.nDirty = true; countN(); bandN(); });
+  on('wText', 'input', function () { ui.wDirty = true; countW(); });
+  on('nPost', 'click', function () { saveNotice(false); });
+  on('nClear', 'click', function () { saveNotice(true); });
+  on('wPost', 'click', function () { saveWord(false); });
+  on('wClear', 'click', function () { saveWord(true); });
+  on('syncBtn', 'click', function () { ui.nDirty = ui.wDirty = false; load(false).then(function (ok) { if (ok) toast('새로 불러왔어요'); }); });
+  on('cxGo', 'click', async function () {
+    var p = parseConn($('cxText').value);
+    if (!p) { $('cxErr').hidden = false; $('cxErr').textContent = '주소에서 열쇠(k=…)를 찾지 못했어요. 교사용 주소를 통째로 붙여 넣어 주세요.'; return; }
+    $('cxGo').disabled = true; $('cxGo').textContent = '연결 중…';
+    var err = await connect(p);
+    $('cxGo').disabled = false; $('cxGo').textContent = '연결하기';
+    if (err) { $('cxErr').hidden = false; $('cxErr').textContent = err; }
+  });
+  on('reconnectBtn', 'click', function () { $('reconBox').hidden = !$('reconBox').hidden; });
+  on('reGo', 'click', async function () {
+    var p = parseConn($('reText').value);
+    if (!p) { $('reErr').hidden = false; $('reErr').textContent = '주소에서 열쇠(k=…)를 찾지 못했어요.'; return; }
+    $('reGo').disabled = true; var err = await connect(p); $('reGo').disabled = false;
+    if (err) { $('reErr').hidden = false; $('reErr').textContent = err; } else { $('reconBox').hidden = true; $('reText').value = ''; toast('연결을 바꿨어요'); }
+  });
+  var forgetT;
+  on('forgetBtn', 'click', function () {
+    var b = $('forgetBtn');
+    if (!forgetT) { b.textContent = '정말 해제할까요? 한 번 더 누르세요'; forgetT = setTimeout(function () { forgetT = null; b.textContent = '이 폰에서 연결 해제'; }, 4000); return; }
+    clearTimeout(forgetT); forgetT = null; try { localStorage.removeItem(LS); } catch (e) {} S = null; D = null; b.textContent = '이 폰에서 연결 해제'; showConnect('');
+  });
+  var deferred = null;
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; $('installBtn').hidden = false; });
+  on('installBtn', 'click', async function () { if (!deferred) return; deferred.prompt(); try { await deferred.userChoice; } catch (e) {} deferred = null; $('installBtn').hidden = true; });
+  window.addEventListener('appinstalled', function () { $('installBtn').hidden = true; toast('앱을 설치했어요'); });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && D) refreshRecent(); });
+  setInterval(function () { if (!document.hidden && D && ui.tab === 'call') refreshRecent(); }, 20000);
+  window.addEventListener('online', function () { if (S && !D) load(true); });
+
+  /* ── 시작 ── */
+  async function boot() {
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});
+    // 연결 링크(#c=…)로 열었으면 바로 연결 — 열쇠가 주소줄에 남지 않게 곧바로 지운다
+    var fromHash = location.hash && parseConn(location.hash.slice(1));
+    if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+    if (fromHash) {
+      showConnect(''); $('cxText').value = ''; $('cxGo').disabled = true; $('cxGo').textContent = '연결 중…';
+      var err = await connect(fromHash); $('cxGo').disabled = false; $('cxGo').textContent = '연결하기';
+      if (err) showConnect(err);
+      return;
+    }
+    if (!S || !S.u || !S.k) { showConnect(''); return; }
+    showMain();
+    try { var t = sessionStorage.getItem('ytc.tab'); if (t) ui.tab = t; } catch (e) {}
+    $('stuGrid').innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+    var ok = await load(true);
+    if (ok) setTab(S.teacher ? ui.tab : 'set');
+  }
+  boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "전환기보드 담임",
+  "short_name": "전환기 담임",
+  "description": "담임 선생님용 — 우리 반 칠판에 공지를 올리고 학생을 호출합니다",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4eee4",
+  "theme_color": "#2b78c0",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
