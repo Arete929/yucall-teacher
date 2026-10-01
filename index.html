@@ -401,7 +401,7 @@ ol.how b { color: var(--ink); }
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '1.1.0';
+  var APP_VERSION = '1.1.1';
   var LS = 'ytc1';
   var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
   var SIZES = [[1, '기본'], [2, '크게'], [3, '더 크게']];
@@ -636,7 +636,12 @@ ol.how b { color: var(--ink); }
     return (+m[2]) + '/' + (+m[3]) + '(' + '일월화수목금토'.charAt(new Date(+m[1], +m[2] - 1, +m[3]).getDay()) + ')';
   }
   function headTitle(r) { var t = (r.title || '').trim(); if (t) return { text: t, none: false }; var f = String(r.text || '').split('\n')[0].trim(); return f ? { text: f, none: true } : { text: '(제목 없음)', none: true }; }
-  function copyRows(rows) { return (rows || []).map(function (r) { return { date: r.date || '', title: r.title || '', text: r.text || '', step: r.step || 1, _open: false }; }); }
+  function levelOf(l) { var m = LEVEL_RE.exec(l); if (!m) return 0; var c = m[1].charAt(0); return c === '\u2611' ? 2 : (c === '\u2714' ? 3 : 1); }
+  function indentFor(lv) { return lv > 1 ? new Array((lv - 1) * 2 + 1).join('\u2003') : ''; }   // 단계가 오를 때마다 전각 공백 2개씩
+  function normIndent(text) {   // 줄마다 «기호에 맞는 들여쓰기»로 맞춘다(직접 친 기호·서버에서 받은 글도)
+    return String(text || '').split('\n').map(function (l) { var m = LEVEL_RE.exec(l); return m ? indentFor(levelOf(l)) + m[1] + ' ' + l.slice(m[0].length) : l; }).join('\n');
+  }
+  function copyRows(rows) { return (rows || []).map(function (r) { return { date: r.date || '', title: r.title || '', text: normIndent(r.text), step: r.step || 1, _open: false }; }); }
   function scopeLabel(k) { return k === '전체' ? '학년 전체' : clsLabel(k); }
   function loadTrans() {
     var tr = D.trans || {};
@@ -762,7 +767,7 @@ ol.how b { color: var(--ink); }
     var ls = v.lastIndexOf('\n', a - 1) + 1, le = v.indexOf('\n', b); if (le < 0) le = v.length;
     var lines = v.slice(ls, le).split('\n');
     var allHave = emoji && lines.every(function (l) { var m = LEVEL_RE.exec(l); return m && m[1].charAt(0) === emoji.charAt(0); });
-    var joined = lines.map(function (l) { var body = l.replace(LEVEL_RE, ''); return (emoji && !allHave) ? (emoji + ' ' + body) : body; }).join('\n');
+    var joined = lines.map(function (l) { var body = l.replace(LEVEL_RE, ''); return (emoji && !allHave) ? (indentFor(levelOf(emoji + ' ')) + emoji + ' ' + body) : body; }).join('\n');
     ta.value = v.slice(0, ls) + joined + v.slice(le);
     ta._s = ls; ta._e = ls + joined.length;
     try { ta.setSelectionRange(ta._s, ta._e); } catch (e) {}
@@ -924,6 +929,12 @@ ol.how b { color: var(--ink); }
   on('tList', 'change', function (e) {
     if (!e.target.dataset || e.target.dataset.f !== 'date') return;
     var h = tRow(e.target); if (!h || !h.row) return; h.row.date = e.target.value; tUpdateHead(h.it, h.row); tDirty();
+  });
+  on('tList', 'focusout', function (e) {
+    if (!e.target.dataset || e.target.dataset.f !== 'text') return;
+    var h = tRow(e.target); if (!h || !h.row) return;
+    var v = normIndent(e.target.value);
+    if (v !== e.target.value) { e.target.value = v; h.row.text = v; }
   });
   on('tList', 'mousedown', function (e) { if (e.target.closest('[data-act="num"],[data-act="lvl"]')) e.preventDefault(); });   // 눌러도 키보드·커서를 잃지 않게
   document.addEventListener('selectionchange', function () { var a = document.activeElement; if (a && a.dataset && a.dataset.f === 'text') { a._s = a.selectionStart; a._e = a.selectionEnd; } });
