@@ -202,6 +202,14 @@ h2 small { font-size: 12.5px; font-weight: 600; color: var(--ink2); }
 .pill.warn { background: var(--yellow-ink); color: var(--yellow); }
 .pill.off { background: var(--card); color: var(--ink2); border: 1px solid var(--line); }
 .bd-list { display: grid; gap: 8px; }
+.bd-devs { grid-column: 1 / -1; display: grid; gap: 4px; margin-top: 4px; }
+.bd-dev { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; font-size: 12.5px; line-height: 1.4; padding: 6px 10px; border-radius: 10px; background: var(--card); color: var(--ink2); }
+.bd-dev b { color: var(--ink); font-weight: 800; }
+.bd-dev .sv { white-space: nowrap; font-weight: 800; }
+.bd-dev.ok .sv { color: var(--green); }
+.bd-dev.old .sv, .bd-dev.unknown .sv { color: var(--yellow-ink); background: var(--yellow); border-radius: 999px; padding: 0 8px; }
+.bd-dev.stale { opacity: .6; }
+.bd-item.bad .bd-dev { background: rgba(255,255,255,.55); }
 
 /* ── 지금 보는 반의 교실 칠판 한 줄(번호·버전·최신 여부) ── */
 .bdstrip { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1px 8px; width: calc(100% - 2 * max(16px, env(safe-area-inset-left))); margin: 0 max(16px, env(safe-area-inset-left)) 8px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 13px; text-align: left; line-height: 1.4; }
@@ -410,7 +418,7 @@ ol.how b { color: var(--ink); }
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '1.1.2';
+  var APP_VERSION = '1.2.0';
   var LS = 'ytc1';
   var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
   var SIZES = [[1, '기본'], [2, '크게'], [3, '더 크게']];
@@ -796,6 +804,11 @@ ol.how b { color: var(--ink); }
   }
 
   /* ── 교실 칠판 버전 · 업데이트 알림 ── */
+  function devVer(d) { return d.type ? (d.type === 'web' ? '웹 v' : '앱 v') + esc(d.name) : '버전 모름'; }
+  function devState(d) { return d.status === 'ok' ? '✅ 최신' : (d.status === 'old' ? '⚠️ 업데이트 필요' : (d.status === 'unknown' ? '⚠️ 버전 모름' : '오래 안 켜짐')); }
+  function devRow(d) {
+    return '<div class="bd-dev ' + d.status + '"><span><b>' + esc(d.label) + (d.id ? ' #' + esc(d.id) : '') + '</b> · ' + devVer(d) + (d.connected ? ' · 켜져 있음' : ' · 꺼짐') + '</span><span class="sv">' + devState(d) + '</span></div>';
+  }
   function boardKind(t) { return t === 'apk' ? '앱' : (t === 'web' ? '웹 칠판' : '칠판'); }
   function boardIsBad(b) { return b.status === 'old' || b.status === 'unknown'; }
   function renderBoards() {
@@ -811,7 +824,10 @@ ol.how b { color: var(--ink); }
       else if (b.status === 'unknown') { pill = '<span class="pill warn">확인 안 됨</span>'; v = '버전을 알려 오지 않는 옛 앱'; sub = '업데이트가 필요해요 — 칠판 앱 위 「새 버전」 띠의 「지금 설치」 (최신 v' + esc(L.apkName || '') + ')'; }
       else { pill = '<span class="pill off">연결 이력 없음</span>'; v = '아직 연결된 적 없어요'; }
       var conn = b.connected ? '' : (b.status === 'none' ? '' : ' · 지금은 꺼져 있음');
-      return '<div class="bd-item' + (bad ? ' bad' : '') + '"><b>' + (b.cls === home ? '★ ' : '') + esc(clsLabel(b.cls)) + '</b>' + pill + '<span class="v" style="grid-column:1/-1">' + v + conn + '</span>' + (sub ? '<small>' + sub + '</small>' : '') + '</div>';
+      var devs = b.devices || [], multi = devs.length > 1, dl = '';
+      if (devs.length) dl = '<div class="bd-devs">' + devs.map(devRow).join('') + '</div>';
+      if (multi) { var live = devs.filter(function (d) { return d.status !== 'stale'; }), nb = live.filter(function (d) { return d.status === 'old' || d.status === 'unknown'; }).length; v = '기기 ' + devs.length + '대' + (live.length ? (nb ? ' 중 ' + nb + '대 업데이트 필요' : ' · 모두 최신') : ' · 모두 오래 안 켜짐'); conn = ''; }
+      return '<div class="bd-item' + (bad ? ' bad' : '') + '"><b>' + (b.cls === home ? '★ ' : '') + esc(clsLabel(b.cls)) + '</b>' + pill + '<span class="v" style="grid-column:1/-1">' + v + conn + '</span>' + (sub && !multi ? '<small>' + sub + '</small>' : (multi && bad ? '<small>' + sub + '</small>' : '')) + dl + '</div>';
     }).join('') || '<div class="empty">반 정보가 없어요</div>';
     renderStrip();
   }
@@ -843,8 +859,13 @@ ol.how b { color: var(--ink); }
     else if (b.status === 'old') { v = boardKind(b.type) + ' v' + esc(b.name) + ' → 최신 v' + esc(b.type === 'web' ? (L.web || '') : (L.apkName || '')); pill = '<span class="pill warn">⚠️ 업데이트 필요</span>'; st = 'bad'; }
     else if (b.status === 'unknown') { v = '버전을 알려 오지 않는 옛 앱'; pill = '<span class="pill warn">⚠️ 업데이트 필요</span>'; st = 'bad'; }
     else { v = '아직 연결된 적 없어요'; pill = '<span class="pill off">연결 이력 없음</span>'; st = 'none'; }
+    var devs = b.devices || [], multi = devs.length > 1, tail = (b.status !== 'none' ? (b.connected ? ' · 켜져 있음' : ' · 꺼져 있음') : '');
+    if (multi) {   // 한 반에 칠판 기기가 여럿 — 기기마다 따로 보여 준다(전자칠판·디벗·웹 화면)
+      v = devs.map(function (d) { return esc(d.label) + ' ' + (d.status === 'ok' ? '✅' : (d.status === 'stale' ? '○' : '⚠️')) + ' ' + (d.type ? 'v' + esc(d.name) : '버전 모름'); }).join('  ·  ');
+      tail = '';
+    }
     el.className = 'bdstrip ' + st; el.hidden = false;
-    el.innerHTML = '<span>🖥 <b>' + esc(clsLabel(cls)) + ' 칠판</b></span>' + pill + '<span class="sv">' + v + (b.status !== 'none' ? (b.connected ? ' · 켜져 있음' : ' · 꺼져 있음') : '') + '</span>';
+    el.innerHTML = '<span>🖥 <b>' + esc(clsLabel(cls)) + ' 칠판</b>' + (multi ? ' · 기기 ' + devs.length + '대' : '') + '</span>' + pill + '<span class="sv">' + v + tail + '</span>';
   }
   async function refreshBoards() {
     if (!D) return;
