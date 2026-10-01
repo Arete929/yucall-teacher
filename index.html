@@ -204,10 +204,9 @@ h2 small { font-size: 12.5px; font-weight: 600; color: var(--ink2); }
 .bd-list { display: grid; gap: 8px; }
 
 /* ── 지금 보는 반의 교실 칠판 한 줄(번호·버전·최신 여부) ── */
-.bdstrip { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; width: calc(100% - 2 * max(16px, env(safe-area-inset-left))); margin: 0 max(16px, env(safe-area-inset-left)) 8px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 13px; text-align: left; line-height: 1.4; }
+.bdstrip { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1px 8px; width: calc(100% - 2 * max(16px, env(safe-area-inset-left))); margin: 0 max(16px, env(safe-area-inset-left)) 8px; padding: 7px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 13px; text-align: left; line-height: 1.4; }
 .bdstrip b { font-weight: 900; font-size: 14px; }
-.bdstrip .sv { color: var(--ink2); font-weight: 600; font-variant-numeric: tabular-nums; }
-.bdstrip .pill { margin-left: auto; }
+.bdstrip .sv { grid-column: 1 / -1; color: var(--ink2); font-weight: 600; font-size: 12.5px; font-variant-numeric: tabular-nums; }
 .bdstrip.bad { background: var(--yellow); border-color: transparent; color: var(--yellow-ink); } .bdstrip.bad .sv { color: var(--yellow-ink); }
 .bdstrip.ok { background: var(--green-soft); border-color: transparent; }
 .bdstrip.none { opacity: .85; }
@@ -845,7 +844,7 @@ ol.how b { color: var(--ink); }
     else if (b.status === 'unknown') { v = '버전을 알려 오지 않는 옛 앱'; pill = '<span class="pill warn">⚠️ 업데이트 필요</span>'; st = 'bad'; }
     else { v = '아직 연결된 적 없어요'; pill = '<span class="pill off">연결 이력 없음</span>'; st = 'none'; }
     el.className = 'bdstrip ' + st; el.hidden = false;
-    el.innerHTML = '🖥 <b>' + esc(clsLabel(cls)) + ' 칠판</b> <span class="sv">' + v + (b.status !== 'none' ? (b.connected ? ' · 켜져 있음' : ' · 꺼져 있음') : '') + '</span>' + pill;
+    el.innerHTML = '<span>🖥 <b>' + esc(clsLabel(cls)) + ' 칠판</b></span>' + pill + '<span class="sv">' + v + (b.status !== 'none' ? (b.connected ? ' · 켜져 있음' : ' · 꺼져 있음') : '') + '</span>';
   }
   async function refreshBoards() {
     if (!D) return;
