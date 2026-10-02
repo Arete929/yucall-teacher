@@ -219,6 +219,16 @@ h2 small { font-size: 12.5px; font-weight: 600; color: var(--ink2); }
 .bdstrip.ok { background: var(--green-soft); border-color: transparent; }
 .bdstrip.none { opacity: .85; }
 
+/* ── 칠판 소리 · 호출 화면 설정 ── */
+.bsg { display: grid; gap: 6px; margin-top: 14px; }
+.bsg .lbl { margin-top: 0; }
+.bsrow { display: flex; align-items: center; gap: 10px; }
+.bsrow input[type="range"] { flex: 1; min-width: 0; height: 36px; accent-color: var(--blue); }
+.bsrow output { min-width: 2.2em; text-align: center; font-weight: 900; font-variant-numeric: tabular-nums; }
+.bsrow input:disabled { opacity: .35; }
+.chip.keep { border-style: dashed; color: var(--ink2); }
+.chip.keep[aria-pressed="true"] { background: var(--card2); color: var(--ink); border-color: var(--ink2); }
+
 /* ── 설정 · 연결 ── */
 .stack { display: grid; gap: 14px; }
 .kv { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: 14px; }
@@ -388,6 +398,20 @@ ol.how b { color: var(--ink); }
             <div class="bd-list" id="bdList"></div>
             <p class="hint">칠판이 켜져 있을 때 스스로 알려 오는 버전이에요. <b>업데이트가 필요하면</b> 이 화면 맨 위와 관리자 화면에 알림이 떠요.</p>
           </div>
+          <div class="card" id="bsCard">
+            <h2>🔊 칠판 소리 · 호출 화면 <small>고른 반 칠판에 적용돼요</small></h2>
+            <div class="chips" id="bsCls" role="group" aria-label="설정할 칠판"></div>
+            <div class="live" id="bsLive" style="margin-top:12px"></div>
+            <div class="bsg"><div class="lbl">호출음 <small>점선은 «칠판 그대로»</small></div><div class="chips" id="bsSound" role="radiogroup" aria-label="호출음"></div></div>
+            <div class="bsg"><div class="lbl">호출 횟수</div><div class="chips" id="bsRepeat" role="radiogroup" aria-label="호출 횟수"></div></div>
+            <div class="bsg"><div class="lbl">호출음 크기</div><div class="bsrow"><input type="range" id="bsVol" min="1" max="10" step="1" aria-label="호출음 크기"><output id="bsVolV"></output><button type="button" class="chip soft keep" id="bsVolK" aria-pressed="false">그대로</button></div></div>
+            <div class="bsg"><div class="lbl">음성(이름 읽기) 크기</div><div class="bsrow"><input type="range" id="bsTts" min="1" max="10" step="1" aria-label="음성 크기"><output id="bsTtsV"></output><button type="button" class="chip soft keep" id="bsTtsK" aria-pressed="false">그대로</button></div></div>
+            <div class="bsg"><div class="lbl">호출 화면 보이는 시간 <small id="bsDismissHint"></small></div><div class="chips" id="bsDismiss" role="radiogroup" aria-label="호출 화면 보이는 시간"></div></div>
+            <div class="bsg"><div class="lbl">화면 스타일</div><div class="chips" id="bsStyle" role="radiogroup" aria-label="화면 스타일"></div></div>
+            <div class="rowbtns"><button id="bsSave" class="btn primary" type="button">이 칠판에 적용</button></div>
+            <div class="stamp" id="bsStamp" role="status"></div>
+            <p class="hint">저장하면 칠판이 <b>몇 초 안에</b> 받아 적용해요. 소리를 들어 보려면 칠판 화면의 🔊를 누르세요. 칠판에서 직접 바꾼 값은 다음에 여기서 저장할 때까지 유지돼요.</p>
+          </div>
           <div class="card">
             <h2>🔗 연결</h2>
             <dl class="kv"><dt>칠판</dt><dd id="kvTitle">—</dd><dt>서버</dt><dd id="kvBuild">—</dd><dt>앱</dt><dd id="kvApp"></dd></dl>
@@ -418,7 +442,7 @@ ol.how b { color: var(--ink); }
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '1.2.0';
+  var APP_VERSION = '1.3.0';
   var LS = 'ytc1';
   var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
   var SIZES = [[1, '기본'], [2, '크게'], [3, '더 크게']];
@@ -428,6 +452,10 @@ ol.how b { color: var(--ink); }
   /* ── 저장 · 상태 ── */
   var S = loadS();            // {u, k, teacher, home}
   var D = null;               // 서버가 준 반·학생·선생님·공지
+  var SOUND_NAMES = ['부드러운 차임', '딩동', '멜로디', '나무 노크', '물방울', '🔔 학교 종소리', '📞 전화벨', '🚨 긴 알람'];
+  var STYLE_NAMES = ['글래스', '브루탈', '뉴모피즘', '벤토', '다크', '3D', '미니멀', '그라디언트', '에디토리얼', 'Y2K'];
+  var DISMISS = [5, 10, 15, 20, 30, 45, 60];
+  var BS = { cls: '', vals: {}, busy: false };   // 칠판 설정 — vals[반] = {sound, volume, repeat, tts, dismiss, style} (null = 칠판 그대로)
   var T = { scope: '', rows: {}, saved: {}, pending: {}, dirty: {}, stamps: {}, busy: false, armed: null };   // 전달사항(번호·기호 단계)
   var ui = { np: 'trans', tab: 'call', cls: '', sel: {}, q: '', nTargets: [], nStep: 1, nDirty: false, wCls: '', wDirty: false, sending: false };
   function loadS() { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { return null; } }
@@ -511,7 +539,7 @@ ol.how b { color: var(--ink); }
     $('who').textContent = S.teacher ? S.teacher + ' 선생님' : '선생님을 골라 주세요';
     $('appVer').textContent = 'v' + APP_VERSION;
     renderCls(); renderStudents(); renderCompose(); renderRecent();
-    loadTrans(); renderTrans(); renderBoards();
+    loadTrans(); renderTrans(); renderBoards(); loadBset(); renderBset();
     if (!ui.nDirty) loadNoticeFields();
     if (!ui.wDirty) loadWordField();
     renderNotice(); renderSettings();
@@ -873,6 +901,50 @@ ol.how b { color: var(--ink); }
     if (r && r.ok && r.boards) { D.boards = r.boards; renderBoards(); }
   }
 
+  /* ── 칠판 소리 · 호출 화면 설정 ── */
+  function loadBset() {
+    var m = D.bset || {};
+    D.classes.forEach(function (c) {
+      if (BS.vals[c.cls] && BS.vals[c.cls]._dirty) return;   // 만지던 값은 서버 값으로 덮지 않는다
+      var v = m[c.cls] || {};
+      BS.vals[c.cls] = { sound: v.sound == null ? null : v.sound, volume: v.volume == null ? null : v.volume, repeat: v.repeat == null ? null : v.repeat,
+        tts: v.tts == null ? null : v.tts, dismiss: v.dismiss == null ? null : v.dismiss, style: v.style || 3, at: v.at || '', by: v.by || '', _dirty: false };
+    });
+    if (!BS.cls || !findClass(BS.cls)) BS.cls = S.home || homeOf(S.teacher) || ui.cls || (D.classes[0] && D.classes[0].cls) || '';
+  }
+  function bsChip(attr, val, label, on, keep) { return '<button type="button" class="chip' + (keep ? ' soft keep' : '') + '" data-' + attr + '="' + val + '" role="radio" aria-checked="' + on + '"' + (keep ? ' aria-pressed="' + on + '"' : '') + '>' + label + '</button>'; }
+  function renderBset() {
+    if (!D) return;
+    var v = BS.vals[BS.cls]; if (!v) return;
+    $('bsCls').innerHTML = D.classes.map(function (c) { return '<button type="button" class="chip cls" data-bscls="' + esc(c.cls) + '" aria-pressed="' + (c.cls === BS.cls) + '">' + ((c.cls === (S.home || homeOf(S.teacher))) ? '★ ' : '') + esc(clsLabel(c.cls)) + '</button>'; }).join('');
+    $('bsLive').innerHTML = v.at ? '마지막 적용 · <b>' + esc(v.at) + '</b>' + (v.by ? ' (' + esc(v.by) + ')' : '') : '아직 이 앱에서 바꾼 적이 없어요 — 지금은 칠판 기기의 설정을 그대로 써요.';
+    $('bsSound').innerHTML = bsChip('bsound', '', '그대로', v.sound == null, true) + SOUND_NAMES.map(function (nm, i) { return bsChip('bsound', i, esc(nm), v.sound === i); }).join('');
+    $('bsRepeat').innerHTML = bsChip('brepeat', '', '그대로', v.repeat == null, true) + [1, 2, 3].map(function (k) { return bsChip('brepeat', k, k + '회', v.repeat === k); }).join('');
+    function slider(id, outId, keepId, val, dflt) {
+      var el = $(id); el.value = val == null ? dflt : val; el.disabled = val == null; $(outId).textContent = val == null ? '—' : val;
+      $(keepId).setAttribute('aria-pressed', val == null);
+    }
+    slider('bsVol', 'bsVolV', 'bsVolK', v.volume, 5); slider('bsTts', 'bsTtsV', 'bsTtsK', v.tts, 10);
+    $('bsDismiss').innerHTML = bsChip('bdismiss', '', '그대로', v.dismiss == null, true) + DISMISS.map(function (k) { return bsChip('bdismiss', k, k + '초', v.dismiss === k); }).join('');
+    $('bsDismissHint').textContent = v.dismiss == null ? '그대로 = 전체 설정 ' + (D.autoDismissDefault || 20) + '초' : '';
+    $('bsStyle').innerHTML = STYLE_NAMES.map(function (nm, i) { return bsChip('bstyle', i + 1, esc(nm), v.style === i + 1); }).join('');
+    $('bsSave').disabled = BS.busy;
+  }
+  function bsTouch() { var v = BS.vals[BS.cls]; v._dirty = true; $('bsStamp').textContent = '✏️ 저장하지 않은 변경이 있어요'; }
+  async function bsSave() {
+    if (BS.busy) return; var cls = BS.cls, v = BS.vals[cls];
+    if (!S.teacher) { toast('먼저 선생님 이름을 골라 주세요', true); return; }
+    BS.busy = true; $('bsSave').disabled = true; $('bsSave').textContent = '적용하는 중…';
+    var r = await api('bsetSave', { cls: cls, teacher: S.teacher, sound: v.sound, volume: v.volume, repeat: v.repeat, tts: v.tts, dismiss: v.dismiss, style: v.style }, 2);
+    BS.busy = false; $('bsSave').textContent = '이 칠판에 적용';
+    if (r && r.ok) {
+      v._dirty = false; v.at = r.at; v.by = S.teacher;
+      if (D.bset) D.bset[cls] = { sound: v.sound, volume: v.volume, repeat: v.repeat, tts: v.tts, dismiss: v.dismiss, at: v.at, by: v.by, style: v.style };
+      $('bsStamp').textContent = '✅ 적용 · ' + r.at + ' · ' + clsLabel(cls) + ' 칠판이 몇 초 안에 받아 가요';
+      toast('✅ ' + clsLabel(cls) + ' 칠판 설정을 저장했어요'); renderBset();
+    } else { toast((r && r.msg) || '저장하지 못했어요', true); renderBset(); }
+  }
+
   /* ── 설정 ── */
   function renderSettings() {
     $('teacherChips').innerHTML = D.teachers.length ? D.teachers.map(function (t) {
@@ -909,8 +981,8 @@ ol.how b { color: var(--ink); }
     if (b.dataset.nt !== undefined) { var i = ui.nTargets.indexOf(b.dataset.nt); if (i >= 0) ui.nTargets.splice(i, 1); else ui.nTargets.push(b.dataset.nt); ui.nDirty = false; loadNoticeFields(); renderNotice(); return; }
     if (b.dataset.step !== undefined) { ui.nStep = Number(b.dataset.step); renderNotice(); return; }
     if (b.dataset.wt !== undefined) { ui.wCls = b.dataset.wt; ui.wDirty = false; loadWordField(); renderNotice(); return; }
-    if (b.dataset.teacher !== undefined) { S.teacher = b.dataset.teacher; var hm = homeOf(S.teacher); if (hm && !S.home) { ui.cls = hm; ui.nTargets = [hm]; ui.wCls = hm; ui.nDirty = ui.wDirty = false; if (!Object.keys(T.dirty).some(function (k) { return T.dirty[k]; })) T.scope = hm; } saveS(); renderAll(); toast(S.teacher + ' 선생님으로 저장했어요'); return; }
-    if (b.dataset.home !== undefined) { S.home = b.dataset.home; ui.cls = S.home; ui.nTargets = [S.home]; ui.wCls = S.home; ui.sel = {}; if (!Object.keys(T.dirty).some(function (k) { return T.dirty[k]; })) T.scope = S.home; ui.nDirty = ui.wDirty = false; saveS(); renderAll(); toast('우리 반을 ' + S.home + '으로 저장했어요'); return; }
+    if (b.dataset.teacher !== undefined) { S.teacher = b.dataset.teacher; var hm = homeOf(S.teacher); if (hm && !S.home) { ui.cls = hm; ui.nTargets = [hm]; ui.wCls = hm; ui.nDirty = ui.wDirty = false; if (!Object.keys(T.dirty).some(function (k) { return T.dirty[k]; })) T.scope = hm; if (!(BS.vals[BS.cls] && BS.vals[BS.cls]._dirty)) BS.cls = hm; } saveS(); renderAll(); toast(S.teacher + ' 선생님으로 저장했어요'); return; }
+    if (b.dataset.home !== undefined) { S.home = b.dataset.home; ui.cls = S.home; ui.nTargets = [S.home]; ui.wCls = S.home; ui.sel = {}; if (!Object.keys(T.dirty).some(function (k) { return T.dirty[k]; })) T.scope = S.home; if (!(BS.vals[BS.cls] && BS.vals[BS.cls]._dirty)) BS.cls = S.home; ui.nDirty = ui.wDirty = false; saveS(); renderAll(); toast('우리 반을 ' + S.home + '으로 저장했어요'); return; }
     if (b.dataset.tab) setTab(b.dataset.tab);
   });
   on('q', 'input', function (e) { ui.q = e.target.value; renderStudents(); });
@@ -998,6 +1070,21 @@ ol.how b { color: var(--ink); }
   on('tDraft', 'click', function () { tSave(false); });
   on('tPost', 'click', function () { tSave(true); });
   on('tDiscard', 'click', tDiscard);
+  /* 칠판 소리 · 호출 화면 설정 */
+  on('bsCard', 'click', function (e) {
+    var b = e.target.closest('button'); if (!b) return; var v = BS.vals[BS.cls], d = b.dataset;
+    function num(x) { return x === '' ? null : Number(x); }
+    if (d.bscls !== undefined) { BS.cls = d.bscls; $('bsStamp').textContent = ''; renderBset(); return; }
+    if (d.bsound !== undefined) { v.sound = num(d.bsound); bsTouch(); renderBset(); return; }
+    if (d.brepeat !== undefined) { v.repeat = num(d.brepeat); bsTouch(); renderBset(); return; }
+    if (d.bdismiss !== undefined) { v.dismiss = num(d.bdismiss); bsTouch(); renderBset(); return; }
+    if (d.bstyle !== undefined) { v.style = Number(d.bstyle); bsTouch(); renderBset(); return; }
+    if (b.id === 'bsVolK') { v.volume = v.volume == null ? Number($('bsVol').value) : null; bsTouch(); renderBset(); return; }
+    if (b.id === 'bsTtsK') { v.tts = v.tts == null ? Number($('bsTts').value) : null; bsTouch(); renderBset(); return; }
+    if (b.id === 'bsSave') bsSave();
+  });
+  on('bsVol', 'input', function (e) { var v = BS.vals[BS.cls]; v.volume = Number(e.target.value); $('bsVolV').textContent = v.volume; bsTouch(); $('bsVolK').setAttribute('aria-pressed', false); });
+  on('bsTts', 'input', function (e) { var v = BS.vals[BS.cls]; v.tts = Number(e.target.value); $('bsTtsV').textContent = v.tts; bsTouch(); $('bsTtsK').setAttribute('aria-pressed', false); });
   /* 칠판 업데이트 알림 띠 → 설정의 칠판 목록으로 */
   on('bdStrip', 'click', function () { setTab('set'); setTimeout(function () { $('bdCard').scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); });
   on('vBanner', 'click', function () { setTab('set'); setTimeout(function () { $('bdCard').scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); });
