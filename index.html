@@ -358,6 +358,8 @@ ol.how b { color: var(--ink); }
               <textarea id="nText" class="field" rows="4" maxlength="200" placeholder="예: 5교시 체육 → 체육관에서 합니다"></textarea>
               <div class="count" id="nCount">0 / 200자</div>
               <div class="chips sizes" id="nSizes" role="radiogroup" aria-label="글자 크기"></div>
+              <div class="chips" style="margin-top:10px"><button type="button" class="chip" id="nPop" aria-pressed="true">🔔 팝업으로 띄우기</button></div>
+              <p class="hint" id="nPopHint" style="margin-top:6px"></p>
               <div class="band" id="nBand" hidden><b>📢 긴급 공지</b><span id="nBandTx"></span></div>
               <div class="rowbtns"><button id="nPost" class="btn primary" type="button">올리기</button><button id="nClear" class="btn ghost" type="button">내리기</button></div>
               <div class="stamp" id="nStamp" role="status"></div>
@@ -442,7 +444,7 @@ ol.how b { color: var(--ink); }
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '1.3.0';
+  var APP_VERSION = '1.4.0';
   var LS = 'ytc1';
   var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
   var SIZES = [[1, '기본'], [2, '크게'], [3, '더 크게']];
@@ -456,6 +458,7 @@ ol.how b { color: var(--ink); }
   var STYLE_NAMES = ['글래스', '브루탈', '뉴모피즘', '벤토', '다크', '3D', '미니멀', '그라디언트', '에디토리얼', 'Y2K'];
   var DISMISS = [5, 10, 15, 20, 30, 45, 60];
   var BS = { cls: '', vals: {}, busy: false };   // 칠판 설정 — vals[반] = {sound, volume, repeat, tts, dismiss, style} (null = 칠판 그대로)
+  var NPOP = true;   // 긴급 공지를 칠판에 팝업으로 띄울지 — 기본 켬
   var T = { scope: '', rows: {}, saved: {}, pending: {}, dirty: {}, stamps: {}, busy: false, armed: null };   // 전달사항(번호·기호 단계)
   var ui = { np: 'trans', tab: 'call', cls: '', sel: {}, q: '', nTargets: [], nStep: 1, nDirty: false, wCls: '', wDirty: false, sending: false };
   function loadS() { try { return JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { return null; } }
@@ -622,7 +625,7 @@ ol.how b { color: var(--ink); }
     var cur = one && D.notices[one];
     if (!one) $('nLive').innerHTML = ui.nTargets.length ? '여러 곳을 골랐어요 — <b>같은 문구가 모두에 올라가요.</b>' : '올릴 칠판을 골라 주세요.';
     else $('nLive').innerHTML = cur && cur.notice ? '지금 <b>' + esc(one === '전체' ? '학년 전체' : one) + '</b> 칠판: ' + esc(cur.notice) + '<br><small>' + esc(cur.by || '') + ' · ' + esc(cur.at || '') + '</small>' : '지금 <b>' + esc(one === '전체' ? '학년 전체' : one) + '</b> 칠판에 걸린 공지가 없어요.';
-    countN(); bandN();
+    countN(); bandN(); renderNPop();
     // 담임 한 마디
     $('wTargets').innerHTML = D.classes.map(function (c) { return '<button type="button" class="chip" role="radio" data-wt="' + esc(c.cls) + '" aria-checked="' + (c.cls === ui.wCls) + '">' + esc(clsLabel(c.cls)) + '</button>'; }).join('');
     var w = D.words[ui.wCls];
@@ -632,6 +635,7 @@ ol.how b { color: var(--ink); }
   // 대상을 바꾸거나 새로 불러왔을 때만 입력칸을 그 칠판의 현재 내용으로 채운다(쓰던 글을 덮지 않도록)
   function loadNoticeFields() { var one = ui.nTargets.length === 1 ? ui.nTargets[0] : '', cur = one && D.notices[one]; if (one) { $('nText').value = cur ? cur.notice : ''; ui.nStep = cur ? Math.min(cur.noticeStep || 1, 3) : 1; } }
   function loadWordField() { var w = D.words[ui.wCls]; $('wText').value = w ? w.text : ''; }
+  function renderNPop() { $('nPop').setAttribute('aria-pressed', NPOP); $('nPopHint').textContent = NPOP ? '올리는 즉시 칠판이 호출처럼 팝업으로 띄우고, 「알겠습니다」를 눌러야만 닫혀요(앱이 숨어 있어도 앞으로 나와요).' : '팝업 없이 칠판 맨 위 노란 띠로만 보여요.'; }
   function countN() { $('nCount').textContent = $('nText').value.length + ' / 200자'; }
   function countW() { $('wCount').textContent = $('wText').value.length + ' / 120자'; }
   function bandN() { var t = $('nText').value.trim(); $('nBand').hidden = !t; $('nBand').className = 'band' + (ui.nStep > 1 ? ' l' + ui.nStep : ''); $('nBandTx').textContent = t; }
@@ -641,7 +645,7 @@ ol.how b { color: var(--ink); }
     var text = clear ? '' : $('nText').value.trim();
     if (!clear && !text) { toast('공지 내용을 적어 주세요 (내리려면 「내리기」)', true); return; }
     $('nPost').disabled = $('nClear').disabled = true;
-    var r = await api('saveNotice', { teacher: S.teacher, classes: ui.nTargets, notice: text, step: ui.nStep }, 2);
+    var r = await api('saveNotice', { teacher: S.teacher, classes: ui.nTargets, notice: text, step: ui.nStep, popup: NPOP }, 2);
     $('nPost').disabled = $('nClear').disabled = false;
     if (r && r.ok) {
       var at = r.savedAt || now();
@@ -649,7 +653,7 @@ ol.how b { color: var(--ink); }
       if (clear) { $('nText').value = ''; }
       ui.nDirty = false;
       $('nStamp').textContent = (clear ? '✅ 내림 · ' : '✅ 올림 · ') + at + (r.failed && r.failed.length ? ' (일부 실패: ' + r.failed.map(function (f) { return f.cls; }).join(', ') + ')' : '');
-      toast(clear ? '공지를 내렸어요' : '공지를 올렸어요 — 칠판에 곧 떠요', !!(r.failed && r.failed.length));
+      toast(clear ? '공지를 내렸어요' : (NPOP ? '공지를 올렸어요 — 칠판에 팝업으로 곧 떠요' : '공지를 올렸어요 — 칠판에 곧 떠요'), !!(r.failed && r.failed.length));
       renderNotice();
     } else toast((r && r.msg) || '저장하지 못했어요', true);
   }
@@ -996,6 +1000,7 @@ ol.how b { color: var(--ink); }
   on('nText', 'input', function () { ui.nDirty = true; countN(); bandN(); });
   on('wText', 'input', function () { ui.wDirty = true; countW(); });
   on('nPost', 'click', function () { saveNotice(false); });
+  on('nPop', 'click', function () { NPOP = !NPOP; renderNPop(); });
   on('nClear', 'click', function () { saveNotice(true); });
   on('wPost', 'click', function () { saveWord(false); });
   on('wClear', 'click', function () { saveWord(true); });
