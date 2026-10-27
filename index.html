@@ -241,6 +241,21 @@ h2 small { font-size: 12.5px; font-weight: 600; color: var(--ink2); }
 .connect h1 { margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -.03em; line-height: 1.2; }
 .connect p { margin: 0; color: var(--ink2); }
 .err { color: var(--red); background: var(--red-soft); border-radius: 12px; padding: 10px 12px; font-size: 14px; font-weight: 700; }
+/* 연결 비밀번호 숫자판 */
+.hintline { display: flex; align-items: center; gap: 8px; background: var(--yellow); color: var(--yellow-ink); border-radius: 12px; padding: 9px 14px; font-size: 15px; font-weight: 800; }
+.pindots { display: flex; justify-content: center; gap: 12px; padding: 8px 0 2px; min-height: 34px; }
+.pindots i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--ink2); background: transparent; }
+.pindots i.on { background: var(--ink); border-color: var(--ink); }
+.pindots.bad i { border-color: var(--red); }
+.pindots.bad i.on { background: var(--red); }
+.pinpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pinpad button { min-height: 54px; border-radius: 14px; border: 1px solid var(--line); background: var(--card2); font-size: 22px; font-weight: 800; touch-action: manipulation; }
+.pinpad button.ghost { background: transparent; border-color: transparent; color: var(--ink2); font-size: 15px; font-weight: 700; }
+.pinpad button:active:not(:disabled) { transform: scale(.96); }
+.pinpad button:disabled { opacity: .4; cursor: not-allowed; }
+details.alt { border-top: 1px solid var(--line); padding-top: 12px; }
+details.alt summary { cursor: pointer; font-weight: 800; color: var(--ink2); font-size: 14px; min-height: 36px; display: flex; align-items: center; }
+details.alt[open] summary { margin-bottom: 10px; }
 ol.how { margin: 0; padding-left: 20px; color: var(--ink2); font-size: 14px; display: grid; gap: 4px; }
 ol.how b { color: var(--ink); }
 
@@ -262,16 +277,31 @@ ol.how b { color: var(--ink); }
     <h1>전환기보드 담임</h1>
     <p>우리 반 칠판에 <b>공지</b>를 올리고, 학생을 <b>호출</b>하는 담임 선생님용 앱이에요.</p>
     <div class="card stack">
-      <div>
-        <h2>선생님 화면 주소를 붙여 넣어 주세요</h2>
-        <textarea id="cxText" class="field" rows="3" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec?role=teacher&k=…"></textarea>
-        <p class="hint">컴퓨터에서 쓰던 <b>교사용 주소</b> 그대로 붙여 넣으면 됩니다. 또는 학년부에서 받은 <b>연결 링크</b>를 누르면 저절로 연결돼요.</p>
+      <div class="stack" style="gap:10px">
+        <h2>비밀번호를 입력해 주세요</h2>
+        <div class="hintline" id="pinHint" hidden></div>
+        <div class="pindots" id="pinDots" aria-live="polite" aria-label="입력한 숫자 수"></div>
+        <div id="pinErr" class="err" hidden></div>
+        <div class="pinpad" id="pinPad">
+          <button type="button" data-pk="1">1</button><button type="button" data-pk="2">2</button><button type="button" data-pk="3">3</button>
+          <button type="button" data-pk="4">4</button><button type="button" data-pk="5">5</button><button type="button" data-pk="6">6</button>
+          <button type="button" data-pk="7">7</button><button type="button" data-pk="8">8</button><button type="button" data-pk="9">9</button>
+          <button type="button" class="ghost" data-pk="clear">지움</button><button type="button" data-pk="0">0</button><button type="button" class="ghost" data-pk="back" aria-label="한 칸 지우기">⌫</button>
+        </div>
+        <button id="pinGo" class="btn primary" type="button" disabled>연결하기</button>
       </div>
-      <div id="cxErr" class="err" hidden></div>
-      <button id="cxGo" class="btn primary" type="button">연결하기</button>
+      <details class="alt" id="altConn">
+        <summary>다른 방법으로 연결 (교사용 주소 붙여 넣기)</summary>
+        <div>
+          <textarea id="cxText" class="field" rows="3" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec?role=teacher&k=…"></textarea>
+          <p class="hint">컴퓨터에서 쓰던 <b>교사용 주소</b> 그대로 붙여 넣으면 됩니다. 또는 학년부에서 받은 <b>연결 링크</b>를 누르면 저절로 연결돼요.</p>
+        </div>
+        <div id="cxErr" class="err" hidden style="margin-top:10px"></div>
+        <button id="cxGo" class="btn ghost" type="button" style="width:100%;margin-top:10px">주소로 연결하기</button>
+      </details>
     </div>
     <ol class="how">
-      <li>연결은 <b>이 폰에만</b> 저장돼요. 다른 사람에게 이 주소를 알려 주지 마세요.</li>
+      <li>연결은 <b>이 폰에만</b> 저장돼요. 한 번 연결하면 다음부터는 번호를 묻지 않아요.</li>
       <li>연결한 뒤 크롬 메뉴 ⋮ → <b>홈 화면에 추가</b>(또는 <b>앱 설치</b>)를 하면 앱처럼 열립니다.</li>
     </ol>
   </div>
@@ -444,8 +474,9 @@ ol.how b { color: var(--ink); }
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '1.4.0';
+  var APP_VERSION = '1.5.0';
   var LS = 'ytc1';
+  var EXEC_URL = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';   // 전환기보드 서버 주소(비밀 아님 — 열쇠가 없으면 아무것도 못 한다)
   var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
   var SIZES = [[1, '기본'], [2, '크게'], [3, '더 크게']];
   var $ = function (id) { return document.getElementById(id); };
@@ -502,7 +533,63 @@ ol.how b { color: var(--ink); }
   function now() { var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; }; return d.getFullYear() + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()); }
 
   /* ── 화면 전환 ── */
-  function showConnect(msg) { $('main').hidden = true; $('connect').hidden = false; $('cxErr').hidden = !msg; $('cxErr').textContent = msg || ''; }
+  function showConnect(msg) {
+    $('main').hidden = true; $('connect').hidden = false;
+    $('cxErr').hidden = !msg; $('cxErr').textContent = msg || '';
+    if (msg) $('altConn').open = true;   // 주소로 연결하다 실패했으면 그 칸을 열어 둔다
+    pinReset(); loadConnInfo();
+  }
+
+  /* ── 연결 비밀번호(2026-10-28): 숫자 4~8자리. 맞으면 서버가 열쇠를 주고, 그 폰에만 저장한다 ── */
+  var PIN = { v: '', busy: false, locked: false, set: true };
+  function pinPost(body) {
+    var ctl = new AbortController(), timer = setTimeout(function () { ctl.abort(); }, 30000);
+    return fetch(EXEC_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctl.signal })
+      .then(function (r) { clearTimeout(timer); return r.json(); })
+      .catch(function () { clearTimeout(timer); return { ok: false, net: true, msg: navigator.onLine ? '서버가 바로 답하지 않아요. 잠시 뒤 다시 눌러 주세요.' : '인터넷에 연결되지 않았어요.' }; });
+  }
+  function pinReset() { PIN.v = ''; pinRender(); }
+  function pinRender(bad) {
+    var box = $('pinDots'); box.className = 'pindots' + (bad ? ' bad' : ''); box.innerHTML = '';
+    var n = Math.max(4, PIN.v.length);
+    for (var i = 0; i < n; i++) { var d = document.createElement('i'); if (i < PIN.v.length) d.className = 'on'; box.appendChild(d); }
+    $('pinGo').disabled = PIN.busy || PIN.locked || !PIN.set || PIN.v.length < 4;
+    Array.prototype.forEach.call($('pinPad').querySelectorAll('button'), function (b) { b.disabled = PIN.busy || PIN.locked || !PIN.set; });
+  }
+  function pinMsg(m) { $('pinErr').hidden = !m; $('pinErr').textContent = m || ''; }
+  async function loadConnInfo() {
+    var r = await pinPost({ op: 'connInfo' });
+    var h = $('pinHint');
+    if (r && r.ok) {
+      PIN.set = !!r.set; PIN.locked = !!r.locked;
+      h.hidden = !(r.set && r.hint); h.textContent = r.hint ? '🔑 ' + r.hint : '';
+      if (!r.set) pinMsg('아직 비밀번호가 정해지지 않았어요. 아래 «다른 방법»으로 연결하거나 학년부에 알려 주세요.');
+      else if (r.locked) pinMsg('번호를 여러 번 틀려서 잠시 쉬고 있어요. 10분 뒤에 다시 해 보거나 학년부에 알려 주세요.');
+      else pinMsg('');
+    }
+    pinRender();
+  }
+  function pinKey(k) {
+    if (PIN.busy || PIN.locked || !PIN.set) return;
+    if (k === 'clear') PIN.v = ''; else if (k === 'back') PIN.v = PIN.v.slice(0, -1); else if (PIN.v.length < 8) PIN.v += k;
+    pinMsg(''); pinRender();
+  }
+  async function pinSubmit() {
+    if (PIN.busy || PIN.locked || PIN.v.length < 4) return;
+    PIN.busy = true; pinRender(); $('pinGo').textContent = '확인 중…'; pinMsg('');
+    var r = await pinPost({ op: 'login', pin: PIN.v });
+    if (r && r.ok && r.k) {
+      var err = await connect({ u: EXEC_URL, k: r.k });
+      PIN.busy = false; $('pinGo').textContent = '연결하기'; pinReset();
+      if (err) pinMsg(err);
+      return;
+    }
+    PIN.busy = false; $('pinGo').textContent = '연결하기';
+    if (r && r.locked) PIN.locked = true;
+    pinMsg((r && r.msg) || '연결하지 못했어요');
+    PIN.v = ''; pinRender(!(r && r.net));
+    if (!(r && r.net)) setTimeout(function () { pinRender(); }, 900);
+  }
   function showMain() { $('connect').hidden = true; $('main').hidden = false; }
   function setTab(t) {
     ui.tab = t; try { sessionStorage.setItem('ytc.tab', t); } catch (e) {}
@@ -1005,12 +1092,18 @@ ol.how b { color: var(--ink); }
   on('wPost', 'click', function () { saveWord(false); });
   on('wClear', 'click', function () { saveWord(true); });
   on('syncBtn', 'click', function () { ui.nDirty = ui.wDirty = false; load(false).then(function (ok) { if (ok) toast('새로 불러왔어요'); }); });
+  on('pinPad', 'click', function (e) { var b = e.target.closest('button[data-pk]'); if (b) pinKey(b.dataset.pk); });
+  on('pinGo', 'click', pinSubmit);
+  document.addEventListener('keydown', function (e) {   // 컴퓨터 키보드로도 입력(연결 화면이 보일 때만)
+    if ($('connect').hidden || e.target.closest('textarea, input')) return;
+    if (/^[0-9]$/.test(e.key)) pinKey(e.key); else if (e.key === 'Backspace') pinKey('back'); else if (e.key === 'Enter') pinSubmit();
+  });
   on('cxGo', 'click', async function () {
     var p = parseConn($('cxText').value);
     if (!p) { $('cxErr').hidden = false; $('cxErr').textContent = '주소에서 열쇠(k=…)를 찾지 못했어요. 교사용 주소를 통째로 붙여 넣어 주세요.'; return; }
     $('cxGo').disabled = true; $('cxGo').textContent = '연결 중…';
     var err = await connect(p);
-    $('cxGo').disabled = false; $('cxGo').textContent = '연결하기';
+    $('cxGo').disabled = false; $('cxGo').textContent = '주소로 연결하기';
     if (err) { $('cxErr').hidden = false; $('cxErr').textContent = err; }
   });
   on('reconnectBtn', 'click', function () { $('reconBox').hidden = !$('reconBox').hidden; });
@@ -1117,7 +1210,7 @@ ol.how b { color: var(--ink); }
     if (location.hash) history.replaceState(null, '', location.pathname + location.search);
     if (fromHash) {
       showConnect(''); $('cxText').value = ''; $('cxGo').disabled = true; $('cxGo').textContent = '연결 중…';
-      var err = await connect(fromHash); $('cxGo').disabled = false; $('cxGo').textContent = '연결하기';
+      var err = await connect(fromHash); $('cxGo').disabled = false; $('cxGo').textContent = '주소로 연결하기';
       if (err) showConnect(err);
       return;
     }
