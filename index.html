@@ -474,7 +474,7 @@ ol.how b { color: var(--ink); }
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '1.5.0';
+  var APP_VERSION = '1.5.1';
   var LS = 'ytc1';
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';   // 전환기보드 서버 주소(비밀 아님 — 열쇠가 없으면 아무것도 못 한다)
   var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
@@ -812,7 +812,7 @@ ol.how b { color: var(--ink); }
   }
   function tItemHtml(r, i, total) {
     var today = todayDash(), ht = headTitle(r);
-    var nums = NUMS.map(function (e, k) { return '<button type="button" class="emo" data-act="num" data-e="' + e + '" aria-label="' + (k + 1) + '번">' + e + '</button>'; }).join('') + '<button type="button" class="emo txt" data-act="num" data-e="">번호 빼기</button>';
+    var nums = NUMS.map(function (e, k) { return '<button type="button" class="emo" data-act="num" data-k="' + k + '" aria-label="' + (k + 1) + '번">' + e + '</button>'; }).join('') + '<button type="button" class="emo txt" data-act="num" data-k="-1">번호 빼기</button>';
     var lvls = LEVELS.map(function (l) { return '<button type="button" class="emo lv" data-act="lvl" data-e="' + l[0] + '" aria-label="' + l[1] + '">' + l[0] + ' ' + l[1] + '</button>'; }).join('') + '<button type="button" class="emo txt" data-act="lvl" data-e="">기호 빼기</button>';
     var sizes = [[1, '기본'], [2, '크게'], [3, '더 크게']].map(function (z) { return '<button type="button" class="chip soft" role="radio" data-act="size" data-s="' + z[0] + '" aria-checked="' + (Math.min(r.step || 1, 3) === z[0]) + '">' + z[1] + '</button>'; }).join('');
     return '<div class="titem' + (r._open ? ' open' : '') + '" data-i="' + i + '">' +
@@ -821,12 +821,12 @@ ol.how b { color: var(--ink); }
       '<span class="ttitle' + (ht.none ? ' none' : '') + '">' + esc(ht.text) + '</span><span class="tflag"' + (r.date === today ? '' : ' hidden') + '>오늘</span></button>' +
       '<div class="tbody"' + (r._open ? '' : ' hidden') + '>' +
         '<div class="lbl">제목 <small>칠판에 굵은 제목으로 떠요</small></div>' +
-        '<div class="chips scroll">' + nums + '</div>' +
         '<input class="field" data-f="title" maxlength="' + ((D.limits && D.limits.transTitle) || 40) + '" value="' + esc(r.title) + '" placeholder="예: 진로체험" aria-label="제목">' +
         '<div class="lbl">날짜 <small>비우면 지울 때까지 계속 떠요</small></div>' +
         '<div class="daterow"><input class="field" type="date" data-f="date" value="' + esc(r.date) + '" aria-label="날짜"><button type="button" class="chip soft" data-act="always">상시로</button></div>' +
-        '<div class="lbl">내용 <small>제목 아래 들여쓴 줄로 떠요 · 줄 앞 기호가 단계예요</small></div>' +
-        '<div class="chips scroll">' + lvls + '</div>' +
+        '<div class="lbl">내용 <small>제목 아래 들여쓴 줄로 떠요 · 줄 앞에 번호·기호</small></div>' +
+        '<div class="chips scroll" aria-label="줄 앞 번호">' + nums + '</div>' +
+        '<div class="chips scroll" aria-label="줄 앞 기호">' + lvls + '</div>' +
         '<textarea class="field" data-f="text" rows="5" maxlength="' + ((D.limits && D.limits.transText) || 300) + '" placeholder="내용 (줄바꿈이 칠판에 그대로 보여요)" aria-label="내용">' + esc(r.text) + '</textarea>' +
         '<div class="tfoot"><div class="chips" role="radiogroup" aria-label="글자 크기"><span style="align-self:center;font-size:13px;color:var(--ink2);font-weight:700">글자</span>' + sizes + '</div>' +
         '<div class="mv"><button type="button" data-act="up" aria-label="순위 올리기"' + (i <= 0 ? ' disabled' : '') + '>▲</button><button type="button" data-act="down" aria-label="순위 내리기"' + (i >= total - 1 ? ' disabled' : '') + '>▼</button><button type="button" class="del" data-act="del">🗑 삭제</button></div></div>' +
@@ -904,15 +904,28 @@ ol.how b { color: var(--ink); }
     var ls = v.lastIndexOf('\n', a - 1) + 1, le = v.indexOf('\n', b); if (le < 0) le = v.length;
     var lines = v.slice(ls, le).split('\n');
     var allHave = emoji && lines.every(function (l) { var m = LEVEL_RE.exec(l); return m && m[1].charAt(0) === emoji.charAt(0); });
-    var joined = lines.map(function (l) { var body = l.replace(LEVEL_RE, ''); return (emoji && !allHave) ? (indentFor(levelOf(emoji + ' ')) + emoji + ' ' + body) : body; }).join('\n');
+    var joined = lines.map(function (l) { var body = l.replace(LEVEL_RE, '').replace(NUM_RE, ''); return (emoji && !allHave) ? (indentFor(levelOf(emoji + ' ')) + emoji + ' ' + body) : body; }).join('\n');
     ta.value = v.slice(0, ls) + joined + v.slice(le);
     ta._s = ls; ta._e = ls + joined.length;
     try { ta.setSelectionRange(ta._s, ta._e); } catch (e) {}
   }
-  function applyNumber(title, emoji) {
-    var m = NUM_RE.exec(title), cur = m ? m[0].trim() : '', rest = title.replace(NUM_RE, '');
-    if (!emoji || cur === emoji) return rest;
-    return emoji + ' ' + rest;
+  /* 내용에서 고른 줄(여러 줄이면 전부) 앞에 번호 이모지를 붙인다(2026-10-28 — 예전엔 제목에 붙었다). 여러 줄이면 누른 번호부터 차례로,
+     이미 그 번호들이 붙어 있으면 뗀다. k 가 -1 이면 번호만 뗀다. 단계 기호(✅ ☑️ ✔️)는 번호와 함께 못 쓰므로 번호를 붙이면 기호가 빠진다. */
+  function applyLineNumber(ta, k) {
+    var v = ta.value, a = ta._s != null ? ta._s : ta.selectionStart, b = ta._e != null ? ta._e : ta.selectionEnd;
+    a = Math.min(a, v.length); b = Math.min(b, v.length);
+    var ls = v.lastIndexOf('\n', a - 1) + 1, le = v.indexOf('\n', b); if (le < 0) le = v.length;
+    var lines = v.slice(ls, le).split('\n'), n = 0;
+    var want = lines.map(function (l) { return l.trim() ? (k >= 0 && k + n < NUMS.length ? NUMS[k + n++] : (n++, '')) : ''; });
+    var allHave = k >= 0 && lines.every(function (l, i) { if (!l.trim()) return true; var m = NUM_RE.exec(l); return !!want[i] && !!m && m[0].trim() === want[i]; });
+    var joined = lines.map(function (l, i) {
+      if (!l.trim()) return l;
+      var body = l.replace(LEVEL_RE, '').replace(NUM_RE, '');
+      return (k >= 0 && !allHave && want[i]) ? (want[i] + ' ' + body) : body;
+    }).join('\n');
+    ta.value = v.slice(0, ls) + joined + v.slice(le);
+    ta._s = ls; ta._e = ls + joined.length;
+    try { ta.setSelectionRange(ta._s, ta._e); } catch (e) {}
   }
   function tRow(el) { var it = el.closest('.titem'); return it ? { it: it, row: (T.rows[T.scope] || [])[Number(it.dataset.i)] } : null; }
   function tUpdateHead(it, r) {
@@ -1135,7 +1148,7 @@ ol.how b { color: var(--ink); }
     var b = e.target.closest('button[data-act]'); if (!b) return;
     var h = tRow(b); if (!h || !h.row) return; var r = h.row, act = b.dataset.act, rows = T.rows[T.scope];
     if (act === 'toggle') { r._open = !r._open; h.it.classList.toggle('open', r._open); h.it.querySelector('.tbody').hidden = !r._open; b.setAttribute('aria-expanded', r._open); return; }
-    if (act === 'num') { var ti = h.it.querySelector('[data-f="title"]'); ti.value = applyNumber(ti.value, b.dataset.e); r.title = ti.value; tUpdateHead(h.it, r); tDirty(); return; }
+    if (act === 'num') { var nt = h.it.querySelector('[data-f="text"]'); applyLineNumber(nt, Number(b.dataset.k)); r.text = nt.value; tUpdateHead(h.it, r); tDirty(); return; }
     if (act === 'lvl') { var ta = h.it.querySelector('[data-f="text"]'); applyLevel(ta, b.dataset.e); r.text = ta.value; tUpdateHead(h.it, r); tDirty(); return; }
     if (act === 'always') { r.date = ''; h.it.querySelector('[data-f="date"]').value = ''; tUpdateHead(h.it, r); tDirty(); return; }
     if (act === 'size') { r.step = Number(b.dataset.s); Array.prototype.forEach.call(h.it.querySelectorAll('[data-act="size"]'), function (x) { x.setAttribute('aria-checked', x === b ? 'true' : 'false'); }); tDirty(); return; }
