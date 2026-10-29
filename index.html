@@ -474,7 +474,7 @@ ol.how b { color: var(--ink); }
 <script>
 (function () {
   'use strict';
-  var APP_VERSION = '1.5.1';
+  var APP_VERSION = '1.6.0';
   var LS = 'ytc1';
   var EXEC_URL = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';   // 전환기보드 서버 주소(비밀 아님 — 열쇠가 없으면 아무것도 못 한다)
   var QUICK = ['교무실로 오세요', '상담실로 오세요', '준비물 챙겨서 오세요', '지금 바로 오세요', '체육관으로 오세요'];
@@ -865,11 +865,11 @@ ol.how b { color: var(--ink); }
   }
   function cleanRows(sc) { return (T.rows[sc] || []).filter(function (r) { return (r.title || '').trim() || (r.text || '').trim(); }).map(function (r) { return { date: r.date || '', title: (r.title || '').trim(), text: r.text || '', step: r.step || 1 }; }); }
   function disarm() { T.armed = null; $('tPost').textContent = '✅ ' + (T.scope === '전체' ? '모든 반 칠판에 올리기' : '칠판에 올리기'); }
-  async function tSave(post) {
+  async function tSave(post, afterDel) {   // afterDel: 줄을 지운 직후의 자동 반영 — 지우기가 이미 두 번 눌러야 하므로 «한 번 더» 확인은 건너뛴다
     if (T.busy) return;
     var sc = T.scope;
     if (post && !T.dirty[sc] && !T.pending[sc]) { toast('올릴 내용이 없어요'); return; }
-    if (post && sc === '전체' && T.armed !== sc) {   // 학년 전체는 실수로 누르면 모든 반 칠판이 바뀐다 — 한 번 더 눌러야 올라간다
+    if (post && sc === '전체' && !afterDel && T.armed !== sc) {   // 학년 전체는 실수로 누르면 모든 반 칠판이 바뀐다 — 한 번 더 눌러야 올라간다
       T.armed = sc; $('tPost').textContent = '정말 모든 반에 올릴까요? 한 번 더'; setTimeout(function () { if (T.armed === sc) { T.armed = null; if (T.scope === sc) disarm(); } }, 4000); return;
     }
     T.armed = null;
@@ -882,7 +882,7 @@ ol.how b { color: var(--ink); }
       if (!post || T.dirty[sc]) T.rows[sc] = copyRows(clean);
       T.saved[sc] = copyRows(T.rows[sc]); T.dirty[sc] = false;
       T.pending[sc] = !post; T.stamps[sc] = (post ? r.publishedAt : r.savedAt) || now();
-      toast(post ? '✅ ' + scopeLabel(sc) + ' 칠판에 올렸어요 — 곧 바뀌어요' : '📝 초안으로 저장했어요 (칠판에는 아직 안 나와요)');
+      toast(post ? (afterDel ? '🗑 지웠어요 — ' + scopeLabel(sc) + ' 칠판에도 바로 반영돼요' : '✅ ' + scopeLabel(sc) + ' 칠판에 올렸어요 — 곧 바뀌어요') : '📝 초안으로 저장했어요 (칠판에는 아직 안 나와요)');
       renderTrans();
     } else {
       if (r && r.draftSaved) { T.dirty[sc] = false; T.pending[sc] = true; T.saved[sc] = copyRows(T.rows[sc]); T.stamps[sc] = r.savedAt || T.stamps[sc]; }
@@ -1158,7 +1158,13 @@ ol.how b { color: var(--ink); }
     }
     if (act === 'del') {   // 두 번 눌러야 지워진다(주머니 속에서 눌려도 안전하게)
       if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = '정말 삭제 · 한 번 더'; setTimeout(function () { if (b.isConnected) { delete b.dataset.armed; b.textContent = '🗑 삭제'; } }, 3000); return; }
+      var blank = !(r.title || '').trim() && !(r.text || '').trim();   // 아직 쓰지 않은 새 줄은 서버에 없으니 그냥 지운다
       rows.splice(rows.indexOf(r), 1); tDirty(); renderTList();
+      if (blank) return;
+      /* 지우면 바로 서버·칠판에 반영한다(2026-10-29) — 예전엔 화면에서만 지워져서 「칠판에 올리기」를 안 누르고 새로고침하면 되살아났고,
+         관리자 화면에도 계속 남아 있었다. */
+      if (T.busy) { toast('저장 중이에요 — 끝나면 「칠판에 올리기」를 눌러 주세요', true); return; }
+      tSave(true, true);
     }
   });
   on('tList', 'input', function (e) {
@@ -1201,6 +1207,31 @@ ol.how b { color: var(--ink); }
   on('vBanner', 'click', function () { setTab('set'); setTimeout(function () { $('bdCard').scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 60); });
   setInterval(function () { if (!document.hidden && D) refreshBoards(); }, 60000);
 
+  /* 관리자 화면·다른 폰에서 올리거나 지운 공지·한 마디·전달사항이 이 앱에도 따라온다(2026-10-29).
+     예전엔 앱을 열 때 한 번만 받아서, 관리자 화면에서 지워도 폰에는 계속 남아 있었다.
+     쓰던 것(저장 안 한 전달사항·입력 중인 칸)은 덮지 않고, 바뀐 게 없으면 화면을 다시 그리지 않는다. */
+  var syncBusy = false, syncSig = '';
+  async function syncLive() {
+    if (!S || !D || document.hidden || syncBusy || T.busy || ui.sending) return;
+    syncBusy = true;
+    var r = await api('sync', null, 1);
+    syncBusy = false;
+    if (!r || !r.ok || !D || T.busy) return;
+    if (!syncSig) syncSig = JSON.stringify([D.notices, D.words, D.trans]);
+    var sig = JSON.stringify([r.notices, r.words, r.trans]);
+    if (sig === syncSig) return;
+    var ae = document.activeElement;
+    if (ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) return;   // 입력 중이면 다음 번에 — 커서가 튀거나 쓰던 글이 지워지지 않게
+    syncSig = sig;
+    D.notices = r.notices || {}; D.words = r.words || {}; D.trans = r.trans || {};
+    loadTrans(); renderTrans();
+    if (!ui.nDirty) loadNoticeFields();
+    if (!ui.wDirty) loadWordField();
+    renderNotice();
+  }
+  setInterval(syncLive, 30000);
+  window.addEventListener('focus', syncLive);
+
   var forgetT;
   on('forgetBtn', 'click', function () {
     var b = $('forgetBtn');
@@ -1211,7 +1242,7 @@ ol.how b { color: var(--ink); }
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; $('installBtn').hidden = false; });
   on('installBtn', 'click', async function () { if (!deferred) return; deferred.prompt(); try { await deferred.userChoice; } catch (e) {} deferred = null; $('installBtn').hidden = true; });
   window.addEventListener('appinstalled', function () { $('installBtn').hidden = true; toast('앱을 설치했어요'); });
-  document.addEventListener('visibilitychange', function () { if (!document.hidden && D) { refreshRecent(); refreshBoards(); } });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && D) { refreshRecent(); refreshBoards(); syncLive(); } });
   setInterval(function () { if (!document.hidden && D && ui.tab === 'call') refreshRecent(); }, 20000);
   window.addEventListener('online', function () { if (S && !D) load(true); });
 
