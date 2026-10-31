@@ -1,14 +1,14 @@
 /* 전환기 관리 앱 — 서비스워커. 설치 화면 뼈대만 저장한다. 교사 화면(구글 서버)은 가로채지 않는다. */
-var CACHE = 'ycb-v1.0.4';
+var CACHE = 'ycb-v1.0.5';
 var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/favicon-32.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); })); });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k.indexOf('ycb-') === 0 && k !== CACHE; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));
 });
 self.addEventListener('fetch', function (e) {
-  var u = new URL(e.request.url);
+  var u = new URL(e.request.url);   // no-store — GitHub Pages 의 10분 캐시 때문에 새 판을 올려도 옛 판이 뜨던 것
   if (e.request.method !== 'GET' || u.origin !== location.origin) return;
-  e.respondWith(fetch(e.request).then(function (r) {
+  e.respondWith(fetch(e.request.url, { cache: 'no-store' }).then(function (r) {
     var copy = r.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, copy); }); return r;
   }).catch(function () { return caches.match(e.request).then(function (m) { return m || caches.match('index.html'); }); }));
 });

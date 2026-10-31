@@ -1,4 +1,4 @@
-<!-- 파일명: board/index.html | 전환기 관리 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.4 («여는 중» 화면이 교사 화면을 덮은 채 남아 터치를 막던 것 수정) | @version 1.0.3 (앱 이름을 혜원전환기보드 → 전환기 관리로: 교실 칠판과 헷갈리지 않게) -->
+<!-- 파일명: board/index.html | 전환기 관리 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.5 (설치된 앱이 옛 판에 머물던 것 수정 — 서비스워커가 브라우저 캐시를 거치지 않고, 새 판이면 바로 다시 불러온다. 교사 화면에 앱 버전을 넘긴다) | @version 1.0.4 («여는 중» 화면이 교사 화면을 덮은 채 남아 터치를 막던 것 수정) | @version 1.0.3 (앱 이름을 혜원전환기보드 → 전환기 관리로: 교실 칠판과 헷갈리지 않게) -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -108,7 +108,7 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 </div>
 
 <script>
-var APP_VER = '1.0.4', APP_AT = '2026-10-31 23:12';
+var APP_VER = '1.0.5', APP_AT = '2026-10-31 23:23';
 var EXEC = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';
 var BROWSERS = [
   { id: 'samsung', name: '삼성 인터넷', pkg: 'com.sec.android.app.sbrowser', ua: /SamsungBrowser/ },
@@ -140,12 +140,11 @@ function openFrame() {
   show('ovPick', false); show('ovManual', false);
   var fr = $('fr');
   if (!fr.src) {
-    var done = function () { $('splash').style.display = 'none'; };   // 다 열리면 걷는다 — 남아 있으면 교사 화면을 덮고 터치까지 막는다
+    var done = function () { $('splash').style.display = 'none'; $('foot').style.display = 'none'; };   // 다 열리면 걷는다 — 남아 있으면 교사 화면을 덮고 터치까지 막는다
     fr.onload = done; setTimeout(done, 20000);
-    fr.src = EXEC + '?role=teacher&k=' + encodeURIComponent(k) + '&pwa=1';
+    fr.src = EXEC + '?role=teacher&k=' + encodeURIComponent(k) + '&pwa=1&appv=' + encodeURIComponent(APP_VER);
   }
   fr.classList.add('on');
-  $('foot').style.display = 'none';
 }
 function goBrowser(b, mode) {
   var page = location.host + location.pathname;
@@ -229,7 +228,12 @@ $('btnInstall').onclick = install;
 $('btnHere').onclick = openFrame;
 $('btnManBack').onclick = function () { show('ovManual', false); show('ovPick'); };
 $('btnFavOk').onclick = function () { show('ovFav', false); };
-if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch (e) {} }
+/* 새 판이 올라오면 그 자리에서 다시 불러 바로 새 판으로 연다(첫 설치 때는 다시 부르지 않는다) */
+if ('serviceWorker' in navigator) {
+  var hadSw = !!navigator.serviceWorker.controller, reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadSw && !reloaded) { reloaded = true; location.reload(); } });
+  try { navigator.serviceWorker.register('sw.js').then(function (r) { return r.update(); }).catch(function () {}); } catch (e) {}
+}
 start();
 </script>
 </body>
