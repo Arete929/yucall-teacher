@@ -1,7 +1,7 @@
 {
   "id": "./",
-  "name": "혜원전환기보드",
-  "short_name": "전환기보드",
+  "name": "전환기 관리",
+  "short_name": "전환기 관리",
   "description": "혜원여중 3학년 전환기 교육과정 교사 화면",
   "lang": "ko",
   "start_url": "./",

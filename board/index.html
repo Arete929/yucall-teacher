@@ -1,9 +1,9 @@
-<!-- 파일명: board/index.html | 혜원전환기보드 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.2 -->
+<!-- 파일명: board/index.html | 전환기 관리 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.3 (앱 이름을 혜원전환기보드 → 전환기 관리로: 교실 칠판과 헷갈리지 않게) -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>혜원전환기보드</title>
+<title>전환기 관리</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0e7d3f">
 <meta name="referrer" content="no-referrer">
@@ -50,11 +50,11 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 </head>
 <body>
 
-<iframe id="fr" title="혜원전환기보드 교사 화면" allow="fullscreen; clipboard-write; autoplay"></iframe>
+<iframe id="fr" title="전환기 관리 교사 화면" allow="fullscreen; clipboard-write; autoplay"></iframe>
 
 <div id="splash">
   <img src="icons/icon-512.png" alt="혜원여자중학교 교표" width="132" height="132">
-  <h1>혜원전환기보드</h1>
+  <h1>전환기 관리</h1>
   <p id="splashMsg">여는 중입니다…</p>
 </div>
 <div class="foot" id="foot"></div>
@@ -108,7 +108,7 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 </div>
 
 <script>
-var APP_VER = '1.0.2', APP_AT = '2026-10-31 13:22';
+var APP_VER = '1.0.3', APP_AT = '2026-10-31 22:58';
 var EXEC = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';
 var BROWSERS = [
   { id: 'samsung', name: '삼성 인터넷', pkg: 'com.sec.android.app.sbrowser', ua: /SamsungBrowser/ },
@@ -123,7 +123,7 @@ var cur = BROWSERS.filter(function (b) { return b.ua.test(navigator.userAgent); 
 var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 var deferred = null;
 
-$('foot').innerHTML = '혜원전환기보드 · v' + APP_VER + ' · 배포 ' + APP_AT + ' (KST)<br>ⓒKIMJINHO';
+$('foot').innerHTML = '전환기 관리 · v' + APP_VER + ' · 배포 ' + APP_AT + ' (KST)<br>ⓒKIMJINHO';
 
 /* 주소 뒤 #k=열쇠&m=fav&nf=브라우저 — # 뒤는 서버로 가지 않는다. 읽은 뒤 주소창에서 지운다. */
 function readHash() {
