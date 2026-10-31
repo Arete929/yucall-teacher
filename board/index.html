@@ -1,4 +1,4 @@
-<!-- 파일명: board/index.html | 전환기 관리 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.3 (앱 이름을 혜원전환기보드 → 전환기 관리로: 교실 칠판과 헷갈리지 않게) -->
+<!-- 파일명: board/index.html | 전환기 관리 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.4 («여는 중» 화면이 교사 화면을 덮은 채 남아 터치를 막던 것 수정) | @version 1.0.3 (앱 이름을 혜원전환기보드 → 전환기 관리로: 교실 칠판과 헷갈리지 않게) -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -21,11 +21,11 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 #fr { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: none; background: var(--bg); }
 #fr.on { display: block; }
 
-#splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; }
+#splash { position: fixed; inset: 0; z-index: 1; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; }
 #splash img { width: 132px; height: 132px; }
 #splash h1 { font-size: 24px; font-weight: 800; letter-spacing: -.3px; }
 #splash p { color: var(--sub); max-width: 34em; }
-.foot { position: fixed; left: 0; right: 0; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: 12px; color: var(--sub); line-height: 1.5; }
+.foot { position: fixed; z-index: 2; left: 0; right: 0; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: 12px; color: var(--sub); line-height: 1.5; }
 
 .ov { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 30, 22, .55); overflow-y: auto; }
 .ov.on { display: flex; }
@@ -108,7 +108,7 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 </div>
 
 <script>
-var APP_VER = '1.0.3', APP_AT = '2026-10-31 22:58';
+var APP_VER = '1.0.4', APP_AT = '2026-10-31 23:12';
 var EXEC = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';
 var BROWSERS = [
   { id: 'samsung', name: '삼성 인터넷', pkg: 'com.sec.android.app.sbrowser', ua: /SamsungBrowser/ },
@@ -139,7 +139,11 @@ function openFrame() {
   if (!k) return;
   show('ovPick', false); show('ovManual', false);
   var fr = $('fr');
-  if (!fr.src) fr.src = EXEC + '?role=teacher&k=' + encodeURIComponent(k) + '&pwa=1';
+  if (!fr.src) {
+    var done = function () { $('splash').style.display = 'none'; };   // 다 열리면 걷는다 — 남아 있으면 교사 화면을 덮고 터치까지 막는다
+    fr.onload = done; setTimeout(done, 20000);
+    fr.src = EXEC + '?role=teacher&k=' + encodeURIComponent(k) + '&pwa=1';
+  }
   fr.classList.add('on');
   $('foot').style.display = 'none';
 }
