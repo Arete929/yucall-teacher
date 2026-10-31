@@ -1,4 +1,4 @@
-<!-- 파일명: board/index.html | 혜원전환기보드 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.1 -->
+<!-- 파일명: board/index.html | 혜원전환기보드 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.2 -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -43,6 +43,7 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 .chips .pill { font-size: 16px; }
 .plain { display: block; margin: 14px auto 0; min-height: 44px; padding: 8px 12px; color: var(--sub); font-size: 15px; text-decoration: underline; }
 .note { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #fdecec; color: #8f1a1f; font-size: 15px; }
+.or { margin: 14px 0 8px; font-size: 15px; color: var(--sub); }
 .steps { padding-left: 22px; margin-bottom: 16px; }
 .steps li { margin-bottom: 6px; }
 </style>
@@ -81,8 +82,13 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 <!-- 메뉴로 설치하는 안내 — 브라우저가 설치 창을 바로 띄워 주지 않을 때 -->
 <div class="ov" id="ovManual" role="dialog" aria-modal="true" aria-labelledby="manT">
   <div class="dlg">
-    <h2 id="manT">메뉴에서 설치해 주세요</h2>
-    <p class="lead">이 브라우저는 설치 창을 바로 띄우지 않아요. 이미 깔려 있다면 홈 화면의 혜원 아이콘을 눌러 주세요.</p>
+    <h2 id="manT">다른 브라우저에서 내려받아 주세요</h2>
+    <p class="lead" id="manLead">이 브라우저는 설치 창을 바로 띄우지 않아요. 이미 깔려 있다면 홈 화면의 혜원 아이콘을 눌러 주세요.</p>
+    <div id="manGo">
+      <div class="chips" id="manChips"></div>
+      <div class="note" id="manNote" hidden></div>
+      <p class="or">또는 이 브라우저의 메뉴로 직접 추가해요.</p>
+    </div>
     <ol class="steps">
       <li>브라우저 오른쪽 위나 아래의 <b>메뉴(⋮ 또는 ≡)</b>를 눌러요.</li>
       <li><b>«앱 설치»</b> 또는 <b>«홈 화면에 추가»</b>를 눌러요.</li>
@@ -102,7 +108,7 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 </div>
 
 <script>
-var APP_VER = '1.0.1', APP_AT = '2026-10-31 13:15';
+var APP_VER = '1.0.2', APP_AT = '2026-10-31 13:22';
 var EXEC = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';
 var BROWSERS = [
   { id: 'samsung', name: '삼성 인터넷', pkg: 'com.sec.android.app.sbrowser', ua: /SamsungBrowser/ },
@@ -137,11 +143,31 @@ function openFrame() {
   fr.classList.add('on');
   $('foot').style.display = 'none';
 }
-function goBrowser(b) {
+function goBrowser(b, mode) {
   var page = location.host + location.pathname;
-  var fallback = location.origin + location.pathname + '#nf=' + b.id;
-  location.href = 'intent://' + page + '#k=' + encodeURIComponent(store('ycb_k') || '') + '&m=fav'
+  var fallback = location.origin + location.pathname + '#nf=' + b.id + (mode === 'app' ? '&m=app' : '');
+  location.href = 'intent://' + page + '#k=' + encodeURIComponent(store('ycb_k') || '') + '&m=' + mode
     + '#Intent;scheme=https;package=' + b.pkg + ';S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end';
+}
+function missName(nf) { var m = BROWSERS.filter(function (b) { return b.id === nf; })[0]; return m ? m.name + '이(가) 이 기기에 없어요. 다른 브라우저를 골라 주세요.' : ''; }
+/* 웨일처럼 설치 창을 안 띄우는 브라우저 — 설치 창을 띄워 주는 크롬·삼성 인터넷으로 넘긴다 */
+function renderManual(nf) {
+  var name = cur ? cur.name : '이 브라우저';
+  var capable = cur && (cur.id === 'chrome' || cur.id === 'samsung');
+  var go = isAndroid && !capable ? BROWSERS.filter(function (b) { return b.id === 'chrome' || b.id === 'samsung'; }).reverse() : [];
+  $('manGo').hidden = !go.length;
+  $('manT').textContent = go.length ? '크롬이나 삼성 인터넷에서 내려받아 주세요' : '메뉴에서 설치해 주세요';
+  $('manLead').textContent = name + '은(는) 설치 창을 바로 띄우지 않아요. 이미 깔려 있다면 홈 화면의 혜원 아이콘을 눌러 주세요.';
+  var box = $('manChips'); box.textContent = '';
+  go.forEach(function (b) {
+    var c = document.createElement('button');
+    c.type = 'button'; c.className = 'pill'; c.textContent = b.name + '에서 내려받기';
+    c.onclick = function () { goBrowser(b, 'app'); };
+    box.appendChild(c);
+  });
+  var n = missName(nf);
+  $('manNote').hidden = !n; $('manNote').textContent = n;
+  show('ovPick', false); show('ovManual');
 }
 function renderPick(nf) {
   $('curName').textContent = cur ? cur.name : '브라우저';
@@ -151,16 +177,25 @@ function renderPick(nf) {
   others.forEach(function (b) {
     var c = document.createElement('button');
     c.type = 'button'; c.className = 'pill line'; c.textContent = b.name;
-    c.onclick = function () { goBrowser(b); };
+    c.onclick = function () { goBrowser(b, 'fav'); };
     box.appendChild(c);
   });
-  var miss = BROWSERS.filter(function (b) { return b.id === nf; })[0];
-  $('pickNote').hidden = !miss;
-  if (miss) $('pickNote').textContent = miss.name + '이(가) 이 기기에 없어요. 다른 브라우저를 골라 주세요.';
+  var n = missName(nf);
+  $('pickNote').hidden = !n; $('pickNote').textContent = n;
   show('ovPick');
 }
 function install() {
-  if (!deferred) { show('ovPick', false); show('ovManual'); return; }
+  var btn = $('btnInstall'), label = btn.textContent, waited = 0;
+  if (deferred) { promptInstall(); return; }
+  btn.disabled = true; btn.textContent = '확인하는 중…';
+  var t = setInterval(function () {   // 설치 창 준비 신호가 조금 늦게 오는 때가 있다
+    waited += 200;
+    if (!deferred && waited < 2400) return;
+    clearInterval(t); btn.disabled = false; btn.textContent = label;
+    if (deferred) promptInstall(); else renderManual();
+  }, 200);
+}
+function promptInstall() {
   var ev = deferred; deferred = null;
   ev.prompt();
   ev.userChoice.then(function (r) {
@@ -171,14 +206,16 @@ function start() {
   var o = readHash();
   var hasKey = !!store('ycb_k');
   if (!hasKey) { $('splashMsg').textContent = '연결 정보가 없어요. 교사 화면 📱 모바일 탭의 QR을 카메라로 다시 찍어 주세요.'; return; }
-  if (o.m === 'fav') store('ycb_mode', 'fav');
+  if (o.m === 'fav' || o.m === 'app') store('ycb_mode', o.m);
   if (standalone || store('ycb_mode') === 'fav') {
     if (!navigator.onLine) { $('splashMsg').textContent = '인터넷에 연결되어 있지 않아요. 연결한 뒤 다시 열어 주세요.'; return; }
     openFrame();
     if (o.m === 'fav') show('ovFav');
     return;
   }
+  if (o.nf && o.m === 'app') { renderManual(o.nf); return; }
   renderPick(o.nf);
+  if (o.m === 'app') { $('pickT').textContent = '앱으로 내려받아 주세요'; $('wayFav').hidden = true; $('btnHere').hidden = true; }
 }
 
 window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; });

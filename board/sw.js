@@ -1,5 +1,5 @@
 /* 혜원전환기보드 앱 — 서비스워커. 설치 화면 뼈대만 저장한다. 교사 화면(구글 서버)은 가로채지 않는다. */
-var CACHE = 'ycb-v1.0.1';
+var CACHE = 'ycb-v1.0.2';
 var FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/favicon-32.png'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); })); });
 self.addEventListener('activate', function (e) {
