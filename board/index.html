@@ -1,0 +1,195 @@
+<!-- 파일명: board/index.html | 혜원전환기보드 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.0 -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>혜원전환기보드</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e7d3f">
+<meta name="referrer" content="no-referrer">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --green: #0e7d3f; --green-d: #0a5f30; --red: #cc2127; --ink: #1f2a24; --sub: #5b6a61; --line: #dfe7e2; --soft: #f1f6f3; --bg: #ffffff; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system, system-ui, sans-serif; font-size: 16px; line-height: 1.55; -webkit-text-size-adjust: 100%; }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+
+#fr { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: none; background: var(--bg); }
+#fr.on { display: block; }
+
+#splash { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; }
+#splash img { width: 132px; height: 132px; }
+#splash h1 { font-size: 24px; font-weight: 800; letter-spacing: -.3px; }
+#splash p { color: var(--sub); max-width: 34em; }
+.foot { position: fixed; left: 0; right: 0; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); text-align: center; font-size: 12px; color: var(--sub); line-height: 1.5; }
+
+.ov { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 30, 22, .55); overflow-y: auto; }
+.ov.on { display: flex; }
+.dlg { width: 100%; max-width: 520px; background: var(--bg); border-radius: 20px; padding: 24px 22px 20px; box-shadow: 0 18px 50px rgba(0, 0, 0, .3); margin: auto; }
+.dlg h2 { font-size: 21px; font-weight: 800; letter-spacing: -.3px; margin-bottom: 4px; }
+.dlg .lead { color: var(--sub); margin-bottom: 16px; }
+.way { padding: 16px; border-radius: 14px; background: var(--soft); }
+.way + .way { margin-top: 12px; }
+.way h3 { font-size: 17px; font-weight: 800; margin-bottom: 2px; }
+.way p { font-size: 15px; color: var(--sub); margin-bottom: 12px; }
+.pill { display: block; width: 100%; min-height: 50px; padding: 12px 16px; border-radius: 999px; background: var(--green); color: #fff; font-weight: 800; font-size: 17px; }
+.pill:active { background: var(--green-d); }
+.pill.line { background: #fff; color: var(--green-d); box-shadow: inset 0 0 0 2px var(--green); }
+.chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.chips .pill { font-size: 16px; }
+.plain { display: block; margin: 14px auto 0; min-height: 44px; padding: 8px 12px; color: var(--sub); font-size: 15px; text-decoration: underline; }
+.note { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: #fdecec; color: #8f1a1f; font-size: 15px; }
+.steps { padding-left: 22px; margin-bottom: 16px; }
+.steps li { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+
+<iframe id="fr" title="혜원전환기보드 교사 화면" allow="fullscreen; clipboard-write; autoplay"></iframe>
+
+<div id="splash">
+  <img src="icons/icon-512.png" alt="혜원여자중학교 교표" width="132" height="132">
+  <h1>혜원전환기보드</h1>
+  <p id="splashMsg">여는 중입니다…</p>
+</div>
+<div class="foot" id="foot"></div>
+
+<!-- 브라우저 고르기 -->
+<div class="ov" id="ovPick" role="dialog" aria-modal="true" aria-labelledby="pickT">
+  <div class="dlg">
+    <h2 id="pickT">어떻게 쓰실 건가요?</h2>
+    <p class="lead">쓰실 방법에 맞는 브라우저를 골라 주세요.</p>
+    <div class="way">
+      <h3>📲 앱으로 내려받기</h3>
+      <p>홈 화면에 혜원 로고 아이콘이 생기고, 주소창 없이 앱처럼 열려요. 지금 열린 <b id="curName">브라우저</b>로 진행해요.</p>
+      <button type="button" class="pill" id="btnInstall">브라우저로 앱 내려받기</button>
+    </div>
+    <div class="way" id="wayFav">
+      <h3>⭐ 즐겨찾기만 해 두기</h3>
+      <p>앱을 깔지 않아요. 아래에서 다른 브라우저를 고른 뒤, 열린 화면을 즐겨찾기에 추가해 두세요.</p>
+      <div class="chips" id="chips"></div>
+      <div class="note" id="pickNote" hidden></div>
+    </div>
+    <button type="button" class="plain" id="btnHere">설치 없이 이 브라우저에서 바로 열기</button>
+  </div>
+</div>
+
+<!-- 메뉴로 설치하는 안내 — 브라우저가 설치 창을 바로 띄워 주지 않을 때 -->
+<div class="ov" id="ovManual" role="dialog" aria-modal="true" aria-labelledby="manT">
+  <div class="dlg">
+    <h2 id="manT">메뉴에서 설치해 주세요</h2>
+    <p class="lead">이 브라우저는 설치 창을 바로 띄우지 않아요. 이미 깔려 있다면 홈 화면의 혜원 아이콘을 눌러 주세요.</p>
+    <ol class="steps">
+      <li>브라우저 오른쪽 위나 아래의 <b>메뉴(⋮ 또는 ≡)</b>를 눌러요.</li>
+      <li><b>«앱 설치»</b> 또는 <b>«홈 화면에 추가»</b>를 눌러요.</li>
+      <li>홈 화면에 생긴 혜원 아이콘으로 열어요.</li>
+    </ol>
+    <button type="button" class="pill line" id="btnManBack">돌아가기</button>
+  </div>
+</div>
+
+<!-- 즐겨찾기 안내 — 다른 브라우저로 넘어온 뒤 한 번 -->
+<div class="ov" id="ovFav" role="dialog" aria-modal="true" aria-labelledby="favT">
+  <div class="dlg">
+    <h2 id="favT">⭐ 즐겨찾기에 추가해 주세요</h2>
+    <p class="lead">주소창의 별표나 브라우저 메뉴의 «즐겨찾기(북마크) 추가»를 누르면, 다음부터 이 브라우저에서 바로 열 수 있어요.</p>
+    <button type="button" class="pill" id="btnFavOk">확인</button>
+  </div>
+</div>
+
+<script>
+var APP_VER = '1.0.0', APP_AT = '2026-10-31 13:09';
+var EXEC = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';
+var BROWSERS = [
+  { id: 'samsung', name: '삼성 인터넷', pkg: 'com.sec.android.app.sbrowser', ua: /SamsungBrowser/ },
+  { id: 'whale',   name: '웨일',       pkg: 'com.naver.whale',              ua: /Whale/ },
+  { id: 'edge',    name: '엣지',       pkg: 'com.microsoft.emmx',           ua: /EdgA/ },
+  { id: 'chrome',  name: '크롬',       pkg: 'com.android.chrome',           ua: /Chrome/ }   // Chrome 글자는 다른 브라우저 UA 에도 있어 맨 뒤
+];
+function $(id) { return document.getElementById(id); }
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; }
+var isAndroid = /Android/i.test(navigator.userAgent);
+var cur = BROWSERS.filter(function (b) { return b.ua.test(navigator.userAgent); })[0] || null;
+var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+var deferred = null;
+
+$('foot').innerHTML = '혜원전환기보드 · v' + APP_VER + ' · 배포 ' + APP_AT + ' (KST)<br>ⓒKIMJINHO';
+
+/* 주소 뒤 #k=열쇠&m=fav&nf=브라우저 — # 뒤는 서버로 가지 않는다. 읽은 뒤 주소창에서 지운다. */
+function readHash() {
+  var o = {};
+  location.hash.replace(/^#/, '').split('&').forEach(function (p) { var i = p.indexOf('='); if (i > 0) o[p.slice(0, i)] = decodeURIComponent(p.slice(i + 1)); });
+  if (o.k && /^[A-Za-z0-9]{20,}$/.test(o.k)) store('ycb_k', o.k);
+  if (location.hash) history.replaceState(null, '', location.pathname);
+  return o;
+}
+function show(id, on) { $(id).classList.toggle('on', on !== false); }
+function openFrame() {
+  var k = store('ycb_k');
+  if (!k) return;
+  show('ovPick', false); show('ovManual', false);
+  var fr = $('fr');
+  if (!fr.src) fr.src = EXEC + '?role=teacher&k=' + encodeURIComponent(k) + '&pwa=1';
+  fr.classList.add('on');
+  $('foot').style.display = 'none';
+}
+function goBrowser(b) {
+  var page = location.host + location.pathname;
+  var fallback = location.origin + location.pathname + '#nf=' + b.id;
+  location.href = 'intent://' + page + '#k=' + encodeURIComponent(store('ycb_k') || '') + '&m=fav'
+    + '#Intent;scheme=https;package=' + b.pkg + ';S.browser_fallback_url=' + encodeURIComponent(fallback) + ';end';
+}
+function renderPick(nf) {
+  $('curName').textContent = cur ? cur.name : '브라우저';
+  var others = isAndroid ? BROWSERS.filter(function (b) { return b !== cur; }) : [];
+  $('wayFav').hidden = !others.length;
+  var box = $('chips'); box.textContent = '';
+  others.forEach(function (b) {
+    var c = document.createElement('button');
+    c.type = 'button'; c.className = 'pill line'; c.textContent = b.name;
+    c.onclick = function () { goBrowser(b); };
+    box.appendChild(c);
+  });
+  var miss = BROWSERS.filter(function (b) { return b.id === nf; })[0];
+  $('pickNote').hidden = !miss;
+  if (miss) $('pickNote').textContent = miss.name + '이(가) 이 기기에 없어요. 다른 브라우저를 골라 주세요.';
+  show('ovPick');
+}
+function install() {
+  if (!deferred) { show('ovPick', false); show('ovManual'); return; }
+  var ev = deferred; deferred = null;
+  ev.prompt();
+  ev.userChoice.then(function (r) {
+    if (r && r.outcome === 'accepted') { show('ovPick', false); $('splashMsg').textContent = '설치하고 있어요. 끝나면 홈 화면의 혜원 아이콘을 눌러 주세요.'; }
+  }).catch(function () {});
+}
+function start() {
+  var o = readHash();
+  var hasKey = !!store('ycb_k');
+  if (!hasKey) { $('splashMsg').textContent = '연결 정보가 없어요. 교사 화면 📱 모바일 탭의 QR을 카메라로 다시 찍어 주세요.'; return; }
+  if (o.m === 'fav') store('ycb_mode', 'fav');
+  if (standalone || store('ycb_mode') === 'fav') {
+    if (!navigator.onLine) { $('splashMsg').textContent = '인터넷에 연결되어 있지 않아요. 연결한 뒤 다시 열어 주세요.'; return; }
+    openFrame();
+    if (o.m === 'fav') show('ovFav');
+    return;
+  }
+  renderPick(o.nf);
+}
+
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; });
+window.addEventListener('appinstalled', function () { deferred = null; show('ovPick', false); $('splashMsg').textContent = '설치했어요. 홈 화면의 혜원 아이콘을 눌러 주세요.'; });
+window.addEventListener('hashchange', start);   // 고른 브라우저가 없어 이 화면으로 돌아왔을 때
+$('btnInstall').onclick = install;
+$('btnHere').onclick = openFrame;
+$('btnManBack').onclick = function () { show('ovManual', false); show('ovPick'); };
+$('btnFavOk').onclick = function () { show('ovFav', false); };
+if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('sw.js'); } catch (e) {} }
+start();
+</script>
+</body>
+</html>
