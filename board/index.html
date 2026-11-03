@@ -1,4 +1,4 @@
-<!-- 파일명: board/index.html | 전환기 관리 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.6 (앱이 맨 앞에 있는 동안 휴대폰 화면이 꺼지지 않게 — 화면 켜짐 유지, 열 때 안내 한 줄) | @version 1.0.5 (설치된 앱이 옛 판에 머물던 것 수정 — 서비스워커가 브라우저 캐시를 거치지 않고, 새 판이면 바로 다시 불러온다. 교사 화면에 앱 버전을 넘긴다) | @version 1.0.4 («여는 중» 화면이 교사 화면을 덮은 채 남아 터치를 막던 것 수정) | @version 1.0.3 (앱 이름을 혜원전환기보드 → 전환기 관리로: 교실 칠판과 헷갈리지 않게) -->
+<!-- 파일명: board/index.html | 전환기 관리 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.7 (전체화면에서 와이파이·배터리를 보이도록 휴대폰 상태를 교사 화면에 넘김) | @version 1.0.6 (앱이 맨 앞에 있는 동안 휴대폰 화면이 꺼지지 않게 — 화면 켜짐 유지, 열 때 안내 한 줄) | @version 1.0.5 (설치된 앱이 옛 판에 머물던 것 수정 — 서비스워커가 브라우저 캐시를 거치지 않고, 새 판이면 바로 다시 불러온다. 교사 화면에 앱 버전을 넘긴다) | @version 1.0.4 («여는 중» 화면이 교사 화면을 덮은 채 남아 터치를 막던 것 수정) | @version 1.0.3 (앱 이름을 혜원전환기보드 → 전환기 관리로: 교실 칠판과 헷갈리지 않게) -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -113,7 +113,7 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 </div>
 
 <script>
-var APP_VER = '1.0.6', APP_AT = '2026-11-03 11:42';
+var APP_VER = '1.0.7', APP_AT = '2026-11-04 08:37';
 var EXEC = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';
 var BROWSERS = [
   { id: 'samsung', name: '삼성 인터넷', pkg: 'com.sec.android.app.sbrowser', ua: /SamsungBrowser/ },
@@ -254,6 +254,32 @@ function wakeOn() {
 }
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') wakeOn(); });
 ['pointerdown', 'keydown'].forEach(function (ev) { document.addEventListener(ev, wakeOn, true); });   // 처음에 거절한 기기(사용자 조작이 있어야 하는 경우)도 한 번 누르면 건다
+/* 📶🔋 휴대폰 상태 알리기(1.0.7, 2026-11-04) — 교사 화면을 전체화면으로 보면 휴대폰 맨 위 상태 줄이 사라진다.
+   배터리(Battery Status)는 바깥 껍데기에서만 읽힌다(구글 틀 안에서는 막힘) — 여기서 읽어 교사 화면에 넘긴다.
+   교사 화면이 {type:'yc-st-req'}로 부르면 그 창에 {type:'yc-st', online, net, level, charging}를 보내고, 바뀔 때마다 다시 보낸다.
+   아이폰은 배터리·연결 종류를 알려 주지 않는다 — level:null · net:'' 로 보낸다(교사 화면이 그 칸을 뺀다). */
+var ST = { to: [], bat: null };
+function stNow_() {
+  var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  return { type: 'yc-st', online: navigator.onLine !== false, net: (c && c.type) || '',
+           level: ST.bat ? ST.bat.level : null, charging: ST.bat ? !!ST.bat.charging : false };
+}
+function stSend_() {
+  var m = stNow_();
+  ST.to = ST.to.filter(function (w) { try { w.postMessage(m, '*'); return true; } catch (e) { return false; } });
+}
+window.addEventListener('message', function (e) {
+  if (!e.data || e.data.type !== 'yc-st-req' || !e.source) return;
+  if (!/^https:\/\/([a-z0-9-]+\.)*googleusercontent\.com$/.test(e.origin) && e.origin !== 'https://script.google.com') return;   // 교사 화면(구글 틀)만
+  if (ST.to.indexOf(e.source) < 0) ST.to.push(e.source);
+  try { e.source.postMessage(stNow_(), '*'); } catch (x) {}
+});
+if (navigator.getBattery) navigator.getBattery().then(function (b) {
+  ST.bat = b; ['levelchange', 'chargingchange'].forEach(function (ev) { b.addEventListener(ev, stSend_); }); stSend_();
+}).catch(function () {});
+['online', 'offline'].forEach(function (ev) { window.addEventListener(ev, stSend_); });
+(function () { var c = navigator.connection; if (c && c.addEventListener) c.addEventListener('change', stSend_); })();
+setInterval(stSend_, 30000);
 start();
 setTimeout(wakeOn, 800);
 </script>
