@@ -1,4 +1,4 @@
-<!-- 파일명: board/index.html | 전환기 관리 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.5 (설치된 앱이 옛 판에 머물던 것 수정 — 서비스워커가 브라우저 캐시를 거치지 않고, 새 판이면 바로 다시 불러온다. 교사 화면에 앱 버전을 넘긴다) | @version 1.0.4 («여는 중» 화면이 교사 화면을 덮은 채 남아 터치를 막던 것 수정) | @version 1.0.3 (앱 이름을 혜원전환기보드 → 전환기 관리로: 교실 칠판과 헷갈리지 않게) -->
+<!-- 파일명: board/index.html | 전환기 관리 앱(PWA) — 교사 화면을 앱으로 여는 껍데기 | @version 1.0.6 (앱이 맨 앞에 있는 동안 휴대폰 화면이 꺼지지 않게 — 화면 켜짐 유지, 열 때 안내 한 줄) | @version 1.0.5 (설치된 앱이 옛 판에 머물던 것 수정 — 서비스워커가 브라우저 캐시를 거치지 않고, 새 판이면 바로 다시 불러온다. 교사 화면에 앱 버전을 넘긴다) | @version 1.0.4 («여는 중» 화면이 교사 화면을 덮은 채 남아 터치를 막던 것 수정) | @version 1.0.3 (앱 이름을 혜원전환기보드 → 전환기 관리로: 교실 칠판과 헷갈리지 않게) -->
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -46,6 +46,10 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 .or { margin: 14px 0 8px; font-size: 15px; color: var(--sub); }
 .steps { padding-left: 22px; margin-bottom: 16px; }
 .steps li { margin-bottom: 6px; }
+/* 🔆 화면 켜짐 유지 안내(1.0.6) — 열 때 2초 */
+#wakeT { position: fixed; z-index: 20; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 9px 18px; border-radius: 999px; background: rgba(20, 40, 28, .88); color: #fff; font-size: 15px; font-weight: 700; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .3s; }
+#wakeT.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { #wakeT { transition: none; } }
 </style>
 </head>
 <body>
@@ -58,6 +62,7 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
   <p id="splashMsg">여는 중입니다…</p>
 </div>
 <div class="foot" id="foot"></div>
+<div id="wakeT" role="status" aria-live="polite"></div>
 
 <!-- 브라우저 고르기 -->
 <div class="ov" id="ovPick" role="dialog" aria-modal="true" aria-labelledby="pickT">
@@ -108,7 +113,7 @@ button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 </div>
 
 <script>
-var APP_VER = '1.0.5', APP_AT = '2026-10-31 23:23';
+var APP_VER = '1.0.6', APP_AT = '2026-11-03 11:42';
 var EXEC = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';
 var BROWSERS = [
   { id: 'samsung', name: '삼성 인터넷', pkg: 'com.sec.android.app.sbrowser', ua: /SamsungBrowser/ },
@@ -145,6 +150,7 @@ function openFrame() {
     fr.src = EXEC + '?role=teacher&k=' + encodeURIComponent(k) + '&pwa=1&appv=' + encodeURIComponent(APP_VER);
   }
   fr.classList.add('on');
+  setTimeout(wakeOn, 300);
 }
 function goBrowser(b, mode) {
   var page = location.host + location.pathname;
@@ -234,7 +240,22 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', function () { if (hadSw && !reloaded) { reloaded = true; location.reload(); } });
   try { navigator.serviceWorker.register('sw.js').then(function (r) { return r.update(); }).catch(function () {}); } catch (e) {}
 }
+/* 🔆 화면 켜짐 유지(1.0.6, 2026-11-03) — 교사 화면이 열린 동안 휴대폰 화면이 꺼지지 않게 한다(Screen Wake Lock).
+   다른 앱·홈으로 나가면 휴대폰이 스스로 풀고, 돌아오면 다시 건다. 지원하지 않는 기기(iOS 18.4 미만 등)는 조용히 넘어간다.
+   교사 화면은 다른 주소(구글) 안의 틀이라 바깥 껍데기인 여기서 건다. */
+var wake = null, wakeSaid = false;
+function wakeOn() {
+  if (!('wakeLock' in navigator) || document.visibilityState !== 'visible' || !$('fr').classList.contains('on')) return;
+  if (wake && !wake.released) return;
+  navigator.wakeLock.request('screen').then(function (w) {
+    wake = w;
+    if (!wakeSaid) { wakeSaid = true; var t = $('wakeT'); t.textContent = '🔆 화면 켜짐 유지 중'; t.classList.add('on'); setTimeout(function () { t.classList.remove('on'); }, 2200); }
+  }).catch(function () {});   // 배터리 절약 모드 등으로 거절되면 그냥 둔다
+}
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') wakeOn(); });
+['pointerdown', 'keydown'].forEach(function (ev) { document.addEventListener(ev, wakeOn, true); });   // 처음에 거절한 기기(사용자 조작이 있어야 하는 경우)도 한 번 누르면 건다
 start();
+setTimeout(wakeOn, 800);
 </script>
 </body>
 </html>
