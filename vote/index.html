@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- 파일명: vote/index.html | @version 1.0.0 | 전환기 휴대폰 투표 — 칠판 QR → 학번+학생코드 → 문항 → 내기 (서버: 전환기보드 Vote.js ?api=voteinfo·votelogin·votesubmit·voteimg) -->
+<!-- 파일명: vote/index.html | @version 1.0.1 (낸 뒤 «바꾸고 싶으면 다시 투표» 안내 · 결과 공개 투표만 칠판 결과 안내) | @version 1.0.0 | 전환기 휴대폰 투표 — 칠판 QR → 학번+학생코드 → 문항 → 내기 (서버: 전환기보드 Vote.js ?api=voteinfo·votelogin·votesubmit·voteimg) -->
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -65,7 +65,7 @@ input:focus { border-color: var(--blue); background: var(--card); }
 <body>
 <main class="wrap" id="app"><div class="skel">투표를 불러오는 중…</div></main>
 <div class="bar" id="bar" hidden></div>
-<footer class="foot" id="foot"><div>전환기 투표 · v1.0.0 · 배포 2026-11-18 09:56 (KST)</div><div>ⓒKIMJINHO</div></footer>
+<footer class="foot" id="foot"><div>전환기 투표 · v1.0.1 · 배포 2026-11-18 10:20 (KST)</div><div>ⓒKIMJINHO</div></footer>
 <script>
 /* 서버 — 전환기보드 GAS(JSON API). 학생 화면은 구글 주소 밖(GitHub Pages)에 두어 구글 계정 나이 제한·계정 고르기 화면을 피한다 */
 var API = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';
@@ -138,7 +138,7 @@ function draw() {
     return;
   }
   if (S.step === 'done') {
-    app.innerHTML = head() + '<div class="card done"><div class="i">✅</div><b>' + (S.again ? '고쳐서 냈어요!' : '투표했어요!') + '</b><p>' + esc(S.who) + ' · 투표 기간 안에는 다시 들어와 고칠 수 있어요.<br>결과는 교실 칠판에서 볼 수 있어요.</p><button type="button" class="btn" id="re">처음 화면으로</button></div>';
+    app.innerHTML = head() + '<div class="card done"><div class="i">✅</div><b>' + (S.again ? '고쳐서 냈어요!' : '투표했어요!') + '</b><p>' + esc(S.who) + ' · 바꾸고 싶으면 투표 기간 안에 다시 투표하면 돼요.' + (S.vote && S.vote.showResult ? '<br>결과는 교실 칠판에서 볼 수 있어요.' : '') + '</p><button type="button" class="btn" id="re">처음 화면으로</button></div>';
     $('re').onclick = function () { S.tok = ''; S.vote = null; S.a = {}; S.sid = ''; S.step = 'login'; S.msg = ''; draw(); window.scrollTo(0, 0); };
   }
 }
