@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- 파일명: vote/index.html | @version 1.1.0 (주소에 ?v= 가 없어도 지금 열린 투표를 보여 줌 — 웹 주소만 열어도 투표) | @version 1.0.2 (투표 아이콘 그림) | @version 1.0.1 (낸 뒤 «바꾸고 싶으면 다시 투표» 안내 · 결과 공개 투표만 칠판 결과 안내) | @version 1.0.0 | 전환기 휴대폰 투표 — 칠판 QR → 학번+학생코드 → 문항 → 내기 (서버: 전환기보드 Vote.js ?api=voteinfo·votelogin·votesubmit·voteimg) -->
+<!-- 파일명: vote/index.html | @version 1.2.0 (학번·학생코드를 OTP 칸으로 — 학번 4칸·학생코드 9칸, 붙여 넣기·지우기 됨) | @version 1.1.0 (주소에 ?v= 가 없어도 지금 열린 투표를 보여 줌 — 웹 주소만 열어도 투표) | @version 1.0.2 (투표 아이콘 그림) | @version 1.0.1 (낸 뒤 «바꾸고 싶으면 다시 투표» 안내 · 결과 공개 투표만 칠판 결과 안내) | @version 1.0.0 | 전환기 휴대폰 투표 — 칠판 QR → 학번+학생코드 → 문항 → 내기 (서버: 전환기보드 Vote.js ?api=voteinfo·votelogin·votesubmit·voteimg) -->
 <html lang="ko">
 <head>
 <meta charset="utf-8">
@@ -27,6 +27,18 @@ label { display: block; font-size: 14px; font-weight: 700; color: var(--text2); 
 input { width: 100%; font: inherit; font-size: 22px; font-weight: 700; letter-spacing: 2px; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--soft); color: var(--text); outline: none; }
 input:focus { border-color: var(--blue); background: var(--card); }
 .fld + .fld { margin-top: 14px; }
+.otpw { position: relative; }
+.otpw input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; padding: 0; margin: 0; z-index: 2; font-size: 16px; caret-color: transparent; border: 0; }
+.otp { display: flex; gap: 4px; }
+.otp .g { display: flex; gap: 6px; flex: 1; min-width: 0; }
+.otp .b { font-style: normal; flex: 1; min-width: 0; aspect-ratio: 3 / 4; max-height: 58px; display: grid; place-items: center; border-radius: 12px; border: 2px solid var(--line); background: var(--soft); font-size: 24px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.otp.s4 .g { gap: 10px; }
+.otp.s4 .b { max-height: 66px; font-size: 28px; }
+.otp .b.f { background: var(--card); }
+.otpw:focus-within .b.cur { border-color: var(--blue); background: var(--card); box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 22%, transparent); }
+.otpw:focus-within .b.cur:empty::after { content: ''; width: 2px; height: 55%; background: var(--blue); }
+@media (prefers-reduced-motion: no-preference) { .otpw:focus-within .b.cur:empty::after { animation: blink 1s steps(1) infinite; } }
+@keyframes blink { 50% { opacity: 0; } }
 .hint { font-size: 13px; color: var(--text2); margin-top: 8px; }
 .msg { margin-top: 12px; font-size: 14.5px; font-weight: 700; min-height: 1em; }
 .msg.bad { color: var(--red); }
@@ -66,7 +78,7 @@ input:focus { border-color: var(--blue); background: var(--card); }
 <body>
 <main class="wrap" id="app"><div class="skel">투표를 불러오는 중…</div></main>
 <div class="bar" id="bar" hidden></div>
-<footer class="foot" id="foot"><div>전환기 투표 · v1.1.0 · 배포 2026-11-19 11:15 (KST)</div><div>ⓒKIMJINHO</div></footer>
+<footer class="foot" id="foot"><div>전환기 투표 · v1.2.0 · 배포 2026-11-19 17:52 (KST)</div><div>ⓒKIMJINHO</div></footer>
 <script>
 /* 서버 — 전환기보드 GAS(JSON API). 학생 화면은 구글 주소 밖(GitHub Pages)에 두어 구글 계정 나이 제한·계정 고르기 화면을 피한다 */
 var API = 'https://script.google.com/macros/s/AKfycbxll0iA0M58l30ixnQB6bzUAmPbE6R0QAjO9KHa8m6ujkvIaA7wGmnVPWRYczbiEV3gWQ/exec';
@@ -106,13 +118,24 @@ function draw() {
   if (S.step === 'login') {
     app.innerHTML = head() + (S.info.state !== 'live'
       ? '<div class="card" style="text-align:center"><b>' + (S.info.state === 'wait' ? '아직 투표가 열리지 않았어요' : '투표가 끝났어요') + '</b><p class="hint">' + (S.info.state === 'wait' ? md(S.info.from) + '에 열려요.' : '결과는 교실 칠판에서 볼 수 있어요.') + '</p></div>'
-      : '<form class="card" id="lf" autocomplete="off"><div class="fld"><label for="sid">학번 (4자리)</label><input id="sid" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="예: 3214" autocomplete="off"></div>'
-      + '<div class="fld"><label for="code">학생코드</label><input id="code" type="password" inputmode="numeric" maxlength="12" placeholder="혜원핏에 들어갈 때 쓰는 숫자" autocomplete="off"></div>'
+      : '<form class="card" id="lf" autocomplete="off"><div class="fld"><label for="sid">학번 (4자리)</label><div class="otpw"><input id="sid" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="학번 4자리"><div class="otp s4" id="sidb" aria-hidden="true">' + otpBoxes([4]) + '</div></div></div>'
+      + '<div class="fld"><label for="code">학생코드</label><div class="otpw"><input id="code" type="password" inputmode="numeric" pattern="[0-9]*" autocomplete="off" aria-label="학생코드 9자리 (혜원핏에 들어갈 때 쓰는 숫자)"><div class="otp s9" id="codeb" aria-hidden="true">' + otpBoxes([3, 3, 3]) + '</div></div><p class="hint" style="margin-top:6px">혜원핏에 들어갈 때 쓰는 숫자 9자리</p></div>'
       + '<div class="msg' + (S.msg ? ' bad' : '') + '" id="msg">' + esc(S.msg) + '</div><button type="submit" class="btn pri" id="go"' + (S.busy ? ' disabled' : '') + '>' + (S.busy ? '확인 중…' : '들어가기') + '</button>'
       + '<p class="hint">학생코드는 다른 사람에게 보여 주지 마세요. 이 화면은 저장하지 않아요.</p></form>');
     var f = $('lf'); if (!f) return;
     var sid = $('sid'); sid.value = S.sid || '';
-    sid.oninput = function () { sid.value = sid.value.replace(/\D/g, '').slice(0, 4); S.sid = sid.value; if (sid.value.length === 4) $('code').focus(); };
+    var cd = $('code'), sb = $('sidb'), cb = $('codeb');
+    function digits(el, n) { el.value = el.value.replace(/\D/g, '').slice(0, n); }
+    function paint(el, box, mask) {
+      var v = el.value, bs = box.querySelectorAll('.b'), cur = Math.min(v.length, bs.length - 1);
+      for (var i = 0; i < bs.length; i++) { bs[i].textContent = i < v.length ? (mask ? '●' : v.charAt(i)) : ''; bs[i].className = 'b' + (i < v.length ? ' f' : '') + (i === cur ? ' cur' : ''); }
+    }
+    function toEnd(el) { setTimeout(function () { try { el.setSelectionRange(el.value.length, el.value.length); } catch (e) {} }, 0); }
+    sid.oninput = function () { digits(sid, 4); S.sid = sid.value; paint(sid, sb, false); if (sid.value.length === 4) cd.focus(); };
+    cd.oninput = function () { digits(cd, 9); paint(cd, cb, true); };
+    cd.onkeydown = function (ev) { if (ev.key === 'Backspace' && !cd.value) { sid.focus(); toEnd(sid); } };
+    sid.onfocus = function () { toEnd(sid); }; cd.onfocus = function () { toEnd(cd); };
+    paint(sid, sb, false); paint(cd, cb, true);
     f.onsubmit = function (ev) { ev.preventDefault(); login($('sid').value, $('code').value); };
     if (!S.sid) setTimeout(function () { sid.focus(); }, 50);
     return;
@@ -148,6 +171,7 @@ function draw() {
     $('re').onclick = function () { S.tok = ''; S.vote = null; S.a = {}; S.sid = ''; S.step = 'login'; S.msg = ''; draw(); window.scrollTo(0, 0); };
   }
 }
+function otpBoxes(groups) { return groups.map(function (g) { var h = '<div class="g">'; for (var i = 0; i < g; i++) h += '<i class="b"></i>'; return h + '</div>'; }).join(''); }
 function login(sid, code) {
   sid = String(sid || '').replace(/\D/g, ''); code = String(code || '').replace(/\s/g, '');
   if (sid.length !== 4) { S.msg = '학번 4자리를 넣어 주세요'; draw(); return; }
